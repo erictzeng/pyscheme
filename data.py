@@ -19,3 +19,31 @@ class ConsPair(object):
     def __init__(self, car, cdr):
         self.car = car
         self.cdr = cdr
+
+class Vector(object):
+    
+    def __init__(self):
+        pass
+
+    def init_with_length(self, length):
+        self.LENGTH = length
+
+    def init_with_vals(self, *args):
+        self.values = args
+        self.LENGTH = len(args)
+
+    def init_with_initial_val(self, length, init_val):
+        self.values = [init_val]*length
+        self.LENGTH = length
+
+    def vector_ref(self, index):
+        if (index < 0) or (index >= self.LENGTH):
+            raise IndexError("index out of bounds")
+        else:
+            return self.values[index]
+    
+    def vector_set_bang(self, index, new_val):
+        if (index < 0) or (index >= self.LENGTH):
+            raise IndexError("index out of bounds")
+        else:
+            self[index] = new_val
