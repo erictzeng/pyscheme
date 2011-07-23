@@ -1,24 +1,37 @@
 class Callable(object):
-    pass
+
+    def apply(self, args, env):
+        raise NotImplementedError
 
 
-class Primitive(Callable):
+class Procedure(Callable):
+    
+    def apply(self, args, env):
+        args = [arg.eval(env) for arg in args]
+        return self._apply_evaluated(args)
+    
+    def _apply_evaluated(self, args):
+        raise NotImplementedError
+
+
+class Primitive(Procedure):
     
     def __init__(self, name, proc):
         self.name = name
         self.proc = proc
 
-    def apply(self, args, env):
-        args = [arg.eval(env) for arg in args]
+    def _apply_evaluated(self, args):
         return self.proc(*args)
 
     def __str__(self):
         return "#[subr {0}]".format(self.name)
 
+
 class ConsPair(object):
     def __init__(self, car, cdr):
         self.car = car
         self.cdr = cdr
+
 
 class Vector(object):
     
