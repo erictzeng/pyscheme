@@ -14,3 +14,8 @@ class Primitive(Callable):
 
     def __str__(self):
         return "#[subr {0}]".format(self.name)
+
+class ConsPair(object):
+    def __init__(self, car, cdr):
+        self.car = car
+        self.cdr = cdr
