@@ -30,7 +30,7 @@ def append_bang(list1, list2):
     lastPair = None
     currPair = list1
     while True:
-        if currPair.cdr = NIL:
+        if currPair.cdr == NIL:
             lastPair = currPair
         else:
             currPair = currPair.cdr
