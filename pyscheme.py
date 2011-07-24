@@ -97,7 +97,7 @@ def read(tokens):
             return ast.Identifier(token)
 
 def repl(prompt = "pyscheme > "):
-    while not val == "(exit)":
+    while True:
         val = make_ast(raw_input(prompt)).eval(glob)
         print val.__repr__()
 repl()
