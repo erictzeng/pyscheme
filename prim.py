@@ -22,7 +22,7 @@ def set_cdr_bang(cons_pair, new_cdr):
 
 def list(*args):
     if len(args) == 0:
-        return NIL()
+        return data.Nil()
     else:
         return reduce(lambda accum, next: cons(next, accum), args[::-1], None)
 
@@ -30,7 +30,7 @@ def append_bang(list1, list2):
     lastPair = None
     currPair = list1
     while True:
-        if currPair.cdr == NIL:
+        if currPair.cdr == data.Nil():
             lastPair = currPair
         else:
             currPair = currPair.cdr
