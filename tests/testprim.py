@@ -10,7 +10,7 @@ class PrimitiveSuccessTestCase(unittest.TestCase):
 class PrimitiveFailureTestCase(unittest.TestCase):
 
     def testPlus(self):
-        self.assertRaises(TypeError, prim.plus, 1, "two", 3)
+        self.assertRaises(TypeError, prim.plus, [1, "two", 3])
 
 # import sys
 # unittest.main(sys.modules[__name__])
