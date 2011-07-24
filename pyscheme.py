@@ -98,11 +98,11 @@ def read(tokens):
 
 def repl(prompt = "pyscheme > "):
     while True:
-        input = raw_input(prompt)
-        if input == "(exit)":
+        input_string = raw_input(prompt)
+        if input_string == "(exit)":
             exit()
         else:
-            val = make_list(raw_input(input))
+            val = make_list(input_string)
             while not val == data.Nil():
                 print val.car.eval(glob)
                 val = val.cdr
