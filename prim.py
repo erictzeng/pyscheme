@@ -32,13 +32,9 @@ def primitive(name, type="function"):
     return decorator
 
 ########################################################################
-## Variables provided by the interpreter
-@util.singleton
-class Nil(object):
-    def __repr__(self):
-        return "()"
+## Nil
 
-primitive('nil', "variable")(Nil())
+primitive('nil', "variable")(data.Nil())
 
 ########################################################################
 ## Primitive functions

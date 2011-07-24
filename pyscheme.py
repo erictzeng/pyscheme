@@ -27,7 +27,7 @@ def tokenize(s):
 def make_list(input):
     # Input: string
     tokenized = tokenize_list(input)
-    expression_list = prim.Nil()
+    expression_list = data.Nil()
     for token in reversed(tokenized):
         if isinstance(token, str):
             expression_list = data.ConsPair(make_list(token[1:-1]), expression_list)
@@ -98,8 +98,14 @@ def read(tokens):
 
 def repl(prompt = "pyscheme > "):
     while True:
-        val = make_ast(raw_input(prompt)).eval(glob)
-        print val.__repr__()
+        input = raw_input(prompt)
+        if input == "(exit)":
+            exit()
+        else:
+            val = make_list(raw_input(input))
+            while not val == data.Nil():
+                print val.car.eval(glob)
+                val = val.cdr
 
 if __name__ == "__main__":
     repl()

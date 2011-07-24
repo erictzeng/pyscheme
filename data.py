@@ -77,21 +77,8 @@ class ConsPair(object):
         self.car = car
         self.cdr = cdr
 
-    def __repr_no_parens__(self):
-        if self.cdr == None:
-            return repr(self.car)
-        elif isinstance(self.cdr, ConsPair):
-            return '%s %s' % (repr(self.car), self.cdr.__repr_no_parens__())
-        else:
-            return '%s . %s' % (repr(self.car), repr(self.cdr))
-
     def __repr__(self):
-        if self.cdr == None:
-            return repr(self.car)
-        elif isinstance(self.cdr, ConsPair):
-            return '(%s %s)' % (repr(self.car), self.cdr.__repr_no_parens__())
-        else:
-            return '(%s . %s)' % (repr(self.car), repr(self.cdr))
+        return str(self)
 
     def __str__(self):
         cdr = str(self.cdr)
@@ -100,6 +87,20 @@ class ConsPair(object):
         else:
             cdr = " . {0}".format(cdr)
         return "({0}{1})".format(self.car, cdr.rstrip(" "))
+
+    def eval(self, env):
+        oper = self.car.eval(env)
+        args = []
+        current = self.cdr
+        while not current == Nil():
+            args.append(current.car)
+            current = current.cdr
+        return oper.apply(args, env)
+
+@util.singleton
+class Nil(object):
+    def __repr__(self):
+        return "()"
 
 class Vector(object):
     
