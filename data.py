@@ -53,9 +53,26 @@ class Lambda(Procedure):
 
 
 class ConsPair(object):
+
     def __init__(self, car, cdr):
         self.car = car
         self.cdr = cdr
+
+    def __repr_no_parens__(self):
+        if self.cdr == None:
+            return repr(self.car)
+        elif isinstance(self.cdr, ConsPair):
+            return '%s %s' % (repr(self.car), self.cdr.__repr_no_parens__())
+        else:
+            return '%s . %s' % (repr(self.car), repr(self.cdr))
+
+    def __repr__(self):
+        if self.cdr == None:
+            return repr(self.car)
+        elif isinstance(self.cdr, ConsPair):
+            return '(%s %s)' % (repr(self.car), self.cdr.__repr_no_parens__())
+        else:
+            return '(%s . %s)' % (repr(self.car), repr(self.cdr))
 
 
 class Vector(object):
