@@ -1,3 +1,5 @@
+import util
+
 class Callable(object):
 
     def apply(self, args, env):
@@ -74,9 +76,11 @@ class ConsPair(object):
             list.car = item
         return list
      
+@util.singleton
 class Nil(object):
     def __str__(self):
         return "()"
+
 
 class Vector(object):
     
