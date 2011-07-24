@@ -100,4 +100,6 @@ def repl(prompt = "pyscheme > "):
     while True:
         val = make_ast(raw_input(prompt)).eval(glob)
         print val.__repr__()
-repl()
+
+if __name__ == "__main__":
+    repl()
