@@ -65,6 +65,14 @@ class ConsPair(object):
         else:
             cdr = " . {0}".format(cdr)
         return "({0}{1})".format(self.car, cdr.rstrip(" "))
+    
+    @staticmethod
+    def list(*args):
+        list = Nil()
+        for item in reversed(args):
+            list = ConsPair(Nil(), list)
+            list.car = item
+        return list
      
 class Nil(object):
     def __str__(self):
