@@ -44,3 +44,18 @@ class ExpList(object):
     def __repr__(self):
         items_str = ' '.join(str(node) for node in self.items)
         return "[ExpList {0}]".format(items_str)
+
+
+class Boolean(object):
+    
+    def __init__(self, value):
+        self.val = value
+        
+    def eval(self, env):
+        return self.val
+
+    def __str__(self):
+        return "({0})".format(self.val)
+
+    def __repr__(self):
+        return "[Boolean {0}]".format(self.val)
