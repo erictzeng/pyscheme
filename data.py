@@ -4,6 +4,16 @@ class Callable(object):
         raise NotImplementedError
 
 
+class SpecialForm(Callable):
+    
+    def __init__(self, name, proc):
+        self.name = name
+        self.proc = proc
+        
+    def apply(self, args, env):
+        return self.proc(*args)
+
+
 class Procedure(Callable):
     
     def apply(self, args, env):
@@ -25,6 +35,21 @@ class Primitive(Procedure):
 
     def __str__(self):
         return "#[subr {0}]".format(self.name)
+
+
+class Lambda(Procedure):
+    
+    def __init__(self, params, body, env):
+        self.params = params
+        self.body = body
+        self.env = env
+
+    def _apply_evaluated(self, args):
+        if len(args) != len(self.params):
+            raise TypeError # TODO: fix
+        env = env.Env(self.env)
+        env.update(zip(self.params, args))
+        self.body.eval(env)
 
 
 class ConsPair(object):
