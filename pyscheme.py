@@ -8,7 +8,7 @@ def tokenize(s):
 
 # STUFF FOR TESTING, REMOVE LATER
 glob = env.Env(None)
-glob.new_var('+', prim.plus)
+glob.new_var('+', data.Primitive('+', prim.plus))
 
 def make_ast(s):
     tokens = tokenize(s)
