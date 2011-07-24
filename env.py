@@ -1,3 +1,5 @@
+import util
+
 class Env(dict):
     
     def __init__(self, next):
@@ -31,3 +33,10 @@ class Env(dict):
 
     def new_var(self, key, value):
         dict.__setitem__(self, key, value)
+
+
+@util.singleton
+class GlobalEnv(Env):
+    
+    def __init__(self):
+        Env.__init__(self, None)
