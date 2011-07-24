@@ -8,7 +8,7 @@ def tokenize(s):
 
 # STUFF FOR TESTING, REMOVE LATER
 glob = env.Env(None)
-glob.new_var('+', prim.plus)
+glob.new_var('+', data.Primitive('+', prim.plus))
 
 def make_ast(s):
     tokens = tokenize(s)
@@ -18,18 +18,18 @@ def read(tokens):
     token = tokens.pop(0)
     try:
         num = int(token)
-        return IntLiteral(num)
+        return ast.IntLiteral(num)
     except ValueError, TypeError:
         if token == "(":
             token_list = []
             while tokens[0] != ")":
                 token_list.append(read(tokens))
             tokens.pop(0)
-            return ExpList(*token_list)
+            return ast.ExpList(*token_list)
         elif token == ")":
             raise SyntaxError("mismatched parens")
         else:
-            return Identifier(token)
+            return ast.Identifier(token)
 
 def repl(prompt = "pyscheme > "):
     while True:
