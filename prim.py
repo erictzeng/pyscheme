@@ -17,20 +17,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import env
 import data
+import util
 
-def primitive(name):
-    def decorator(func):
+def primitive(name, type="function"):
+    def decorator(arg):
         glob = env.GlobalEnv()
-        prim = data.Primitive(name, func)
-        glob.new_var(name, prim)
-        return func
+        if type == "function":
+            arg = data.Primitive(name, arg)
+        glob.new_var(name, arg)
+        return arg
     return decorator
-    
+
+########################################################################
+## Variables provided by the interpreter
+@util.singleton
+class Nil(object):
+    def __repr__(self):
+        return "()"
+
+primitive('nil', "variable")(Nil())
+
+########################################################################
+## Primitive functions
 @primitive('+')
 def plus(*args):
     return sum(args)
 
-##### List Procedures ###################
+## List Procedures #####################################################
 @primitive('set-car!')
 def set_car_bang(cons_pair, new_car):
     cons_pair.car = new_car
@@ -42,16 +55,18 @@ def set_cdr_bang(cons_pair, new_cdr):
 @primitive('list')
 def scheme_list(*args):
     if len(args) == 0:
-        return data.Nil()
+        return Nil()
     else:
-        return reduce(lambda accum, next: cons(next, accum), args[::-1], None)
+        return reduce(lambda accum, next: cons(next, accum),
+                      args[::-1],
+                      None)
 
 @primitive('append!')
 def append_bang(list1, list2):
     lastPair = None
     currPair = list1
     while True:
-        if currPair.cdr == data.Nil():
+        if currPair.cdr == Nil():
             lastPair = currPair
         else:
             currPair = currPair.cdr
@@ -67,8 +82,7 @@ def scheme_append(list1, list2):
 def cons(car, cdr):
     return data.ConsPair(car, cdr)
 
-############## Vector procedures ############
-
+## Vector procedures ###################################################
 @primitive('vector-ref')
 def vector_ref(vec, index):
     return vec.vector_ref(index)
