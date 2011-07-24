@@ -1,3 +1,15 @@
+import env
+import data
+
+def primitive(name):
+    def decorator(func):
+        glob = env.GlobalEnv()
+        prim = data.Primitive(name, func)
+        glob.new_var(name, prim)
+        return func
+    return decorator
+    
+@primitive('+')
 def plus(*args):
     return sum(args)
 
