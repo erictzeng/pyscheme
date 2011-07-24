@@ -1,1 +1,12 @@
 *.pyc
+*~
+*.swp
+.~lock.*#
+.backup/
+*.o
+*.gch
+*.tab.c
+*.s
+.depend
+*.orig
+.DS_Store
