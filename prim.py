@@ -14,6 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+import operator
 
 import env
 import data
@@ -23,8 +24,10 @@ def primitive(name, type="function"):
     def decorator(arg):
         glob = env.GlobalEnv()
         if type == "function":
-            arg = data.Primitive(name, arg)
-        glob.new_var(name, arg)
+            obj = data.Primitive(name, arg)
+        else:
+            obj = arg
+        glob.new_var(name, obj)
         return arg
     return decorator
 
@@ -42,6 +45,19 @@ primitive('nil', "variable")(Nil())
 @primitive('+')
 def plus(*args):
     return sum(args)
+
+@primitive('-')
+def minus(*args):
+    return args[0] - sum(args[1:]) if len(args) > 0 else -args[0]
+
+@primitive('*')
+def multiply(*args):
+    return reduce(operator.mul, args)
+
+@primitive('/')
+def divide(*args):
+    return float(args[0]) / reduce(operator.mul, args[1:]) \
+        if len(args) > 0 else 1/args[0]
 
 ## List Procedures #####################################################
 @primitive('set-car!')

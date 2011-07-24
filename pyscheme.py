@@ -27,7 +27,7 @@ def tokenize(s):
 def make_list(input):
     # Input: string
     tokenized = tokenize_list(input)
-    expression_list = data.Nil()
+    expression_list = prim.Nil()
     for token in reversed(tokenized):
         if isinstance(token, str):
             expression_list = data.ConsPair(make_list(token[1:-1]), expression_list)
