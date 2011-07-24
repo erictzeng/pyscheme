@@ -14,18 +14,22 @@ def plus(*args):
     return sum(args)
 
 ##### List Procedures ###################
+@primitive('set-car!')
 def set_car_bang(cons_pair, new_car):
     cons_pair.car = new_car
 
+@primitive('set-cdr!')
 def set_cdr_bang(cons_pair, new_cdr):
     cons_pair.cdr = new_cdr
 
-def list(*args):
+@primitive('list')
+def scheme_list(*args):
     if len(args) == 0:
         return data.Nil()
     else:
         return reduce(lambda accum, next: cons(next, accum), args[::-1], None)
 
+@primitive('append!')
 def append_bang(list1, list2):
     lastPair = None
     currPair = list1
@@ -36,27 +40,33 @@ def append_bang(list1, list2):
             currPair = currPair.cdr
     lastPair.cdr = list2
 
-def append(list1, list2):
+@primitive('append')
+def scheme_append(list1, list2):
     new_list = copy.deepycopy(list1)
     append_bang(new_list, list2)
     return new_list
 
+@primitive('cons')
 def cons(car, cdr):
     return data.ConsPair(car, cdr)
 
 ############## Vector procedures ############
 
+@primitive('vector-ref')
 def vector_ref(vec, index):
     return vec.vector_ref(index)
 
+@primitive('vector-set!')
 def vector_set_bang(vec, index, new_val):
     vec.vector_set_bang(index, new_val)
 
+@primitive('vector')
 def vector(*args):
     vec = Vector()
     vec.init_with_vals(*args)
     return vec
 
+@primitive('make-vector')
 def make_vector(*args):
     vec = Vector()
     if len(args) == 1:  # i.e. (make-vector 3)
