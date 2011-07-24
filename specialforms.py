@@ -25,5 +25,10 @@ def _or(*args, env):
             return ast.Bool("#t")
     return ast.Bool("#f")
 
-def _if(condition, true_case, false_case):
-    
+def _if(condition, true_case, false_case, env):
+    if condition.eval(env).eval(env) != "#f":
+        return true_case.eval(env)
+    elif false_case is None:
+        return None()
+    else:
+        return false_case.eval(env)
