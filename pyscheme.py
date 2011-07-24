@@ -7,8 +7,7 @@ def tokenize(s):
     return s.replace('(', ' ( ').replace(')', ' ) ').split()
 
 # STUFF FOR TESTING, REMOVE LATER
-glob = env.Env(None)
-glob.new_var('+', data.Primitive('+', prim.plus))
+glob = env.GlobalEnv()
 
 def make_ast(s):
     tokens = tokenize(s)

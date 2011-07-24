@@ -1,3 +1,5 @@
+import util
+
 class Callable(object):
 
     def apply(self, args, env):
@@ -58,6 +60,22 @@ class ConsPair(object):
         self.car = car
         self.cdr = cdr
 
+    def __repr_no_parens__(self):
+        if self.cdr == None:
+            return repr(self.car)
+        elif isinstance(self.cdr, ConsPair):
+            return '%s %s' % (repr(self.car), self.cdr.__repr_no_parens__())
+        else:
+            return '%s . %s' % (repr(self.car), repr(self.cdr))
+
+    def __repr__(self):
+        if self.cdr == None:
+            return repr(self.car)
+        elif isinstance(self.cdr, ConsPair):
+            return '(%s %s)' % (repr(self.car), self.cdr.__repr_no_parens__())
+        else:
+            return '(%s . %s)' % (repr(self.car), repr(self.cdr))
+
     def __str__(self):
         cdr = str(self.cdr)
         if cdr[0] == "(" and cdr[-1] == ")":
@@ -74,6 +92,7 @@ class ConsPair(object):
             list.car = item
         return list
      
+@util.singleton
 class Nil(object):
     def __str__(self):
         return "()"
