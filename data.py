@@ -157,6 +157,9 @@ class IntLiteral(object):
     def __str__(self):
         return str(self.val)
 
+    def __eq__(self, num):
+        return self.val == num.val
+
     def __repr__(self):
         return "[IntLiteral {0}]".format(self.val)
 
@@ -174,24 +177,6 @@ class Identifier(object):
     
     def __repr__(self):
         return "[Identifier {0}]".format(self.name)
-
-
-#class ExpList(object):
-#    
-#    def __init__(self, *items):
-#        self.items = items
-#    
-#    def eval(self, env):
-#        oper = self.items[0].eval(env)
-#        return oper.apply(self.items[1:], env)
-#        
-#    def __str__(self):
-#        items_str = ' '.join(str(node) for node in self.items)
-#        return "({0})".format(items_str)
-#
-#    def __repr__(self):
-#        items_str = ' '.join(str(node) for node in self.items)
-#        return "[ExpList {0}]".format(items_str)
 
 
 class Boolean(object):
