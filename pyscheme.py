@@ -34,37 +34,40 @@ def make_list(input):
             expression_list = data.ConsPair(token, expression_list)
     return expression_list
 
-def tokenize_list(input):
+def tokenize_list(input_string):
     # Returns a list of tokens, leaving parenthesized expressions as is
     result = []
-    while input:
-        whitespace = re.match(r" +", input)
-        integer = re.match(r"\d+", input)
-        variable = re.match(r"[!$%&*+-./:<=>?@^_~a-zA-Z]([!$%&*+-./:<=>?@^_~a-zA-Z0-9])*", input)
+    while input_string:
+        whitespace = re.match(r" +", input_string)
+        integer    = re.match(r"\d+", input_string)
+        variable   = re.match(r"[!$%&*+-./:<=>?@^_~a-zA-Z]([!$%&*+-./:<=>?@^_~a-zA-Z0-9])*", input_string)
+        boolean    = re.match(r"#[tf]", input_string)
         # Removes starting whitespace
         if whitespace:
-            input = input[len(whitespace.group()):]
-            continue
+            input_string = input_string[len(whitespace.group()):]
         # Matches integers
         elif integer:
             result += [data.IntLiteral(int(integer.group()))]
-            input = input[len(integer.group()):]
-            continue
+            input_string = input_string[len(integer.group()):]
         # Matches variables
         elif variable:
             result += [data.Identifier(variable.group())]
-            input = input[len(variable.group()):]
+            input_string = input_string[len(variable.group()):]
+        # Matches booleans
+        elif boolean:
+            result += [data.Boolean(boolean.group())]
+            input_string = input_string[len(boolean.group()):]
         # Handles parenthesized expressions
-        elif input[0] == '(':
+        elif input_string[0] == '(':
             parencount = index = 1
             while parencount > 0:
-                if input[index] == '(':
+                if input_string[index] == '(':
                     parencount += 1
-                if input[index] == ')':
+                if input_string[index] == ')':
                     parencount -= 1
                 index += 1
-            result += [input[:index]]
-            input = input[index:]
+            result += [input_string[:index]]
+            input_string = input_string[index:]
             continue
         else:
             return None

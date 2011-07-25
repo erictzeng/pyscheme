@@ -181,19 +181,16 @@ class Identifier(object):
 class Boolean(object):
     
     def __init__(self, value):
-        if value == '#t':
-            self.val = True
-        elif value == '#f':
-            self.val = False
-        else:
-            # Raise exception?
-            pass
-        
+        self.val = value
+
     def eval(self, env):
         return self
 
     def __str__(self):
-        return "({0})".format('#t' if self.val else '#f')
+        return "{0}".format(self.val)
 
     def __repr__(self):
-        return "[Boolean {0}]".format('#t' if self.val else '#f')
+        return "[Boolean {0}]".format(self.val)
+
+    def __nonzero__(self):
+        return self.value == '#t'
