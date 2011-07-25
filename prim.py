@@ -64,8 +64,9 @@ def let(env, var_val_pairs, body):
     new_lambda._apply_evaluated(vals)
 
 @specialform('define')
-def define(env):
-    pass
+def define(env, var, body):
+    env.new_var(str(var), body.eval(env))
+    return var
 
 @specialform('and')
 def _and(env, *args):
