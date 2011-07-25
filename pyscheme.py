@@ -96,7 +96,7 @@ def repl(prompt = "pyscheme > "):
                 print val.car.eval(glob)
                 val = val.cdr
         except Exception as e:
-            print e.args[0]
+            print "ERROR:", e.args[0]
             continue
 
 def _check_input_parens(input_string):
