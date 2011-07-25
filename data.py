@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import util
+import env
 
 class SchemeDatum(object):
     def eval(self, env):
@@ -74,9 +75,11 @@ class Lambda(Procedure):
     def _apply_evaluated(self, args):
         if len(args) != len(self.params):
             raise TypeError # TODO: fix
-        env = env.Env(self.env)
-        env.update(zip(self.params, args))
-        self.body.eval(env)
+        new_env = env.Env(self.env)
+        new_env.update(zip(self.params, args))
+        for expr in self.body[:-1]:
+            self.body.eval(new_env)
+        return self.body[-1].eval(new_env)
 
 
 class ConsPair(SchemeDatum):

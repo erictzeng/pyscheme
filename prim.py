@@ -48,6 +48,13 @@ glob.new_var('false', data.Boolean("#f"))
 def set_bang(env, var, val):
     env.__setitem__(var.eval(env), val.eval(env))
 
+@specialform('lambda')
+def _lambda(env, params, *body):
+    if len(body) == 0:
+        raise Exception("lambda: bad syntax")
+    params = [str(param) for param in params]
+    return data.Lambda(params, body, env)
+
 @specialform('let')
 def let(env, var_val_pairs, body):
     vars_and_vals = zip(var_val_pairs.items)
