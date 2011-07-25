@@ -19,6 +19,7 @@ import operator
 import env
 import data
 import util
+import copy
 
 def primitive(name, type="function"):
     def decorator(arg):
@@ -90,7 +91,7 @@ def append_bang(list1, list2):
 
 @primitive('append')
 def scheme_append(list1, list2):
-    new_list = copy.deepycopy(list1)
+    new_list = copy.deepcopy(list1)
     append_bang(new_list, list2)
     return new_list
 
