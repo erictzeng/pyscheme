@@ -158,6 +158,24 @@ def scheme_append(list1, list2):
 def cons(car, cdr):
     return data.ConsPair(car, cdr)
 
+@primitive('car')
+def car(pair): return pair.car
+
+@primitive('cdr')
+def cdr(pair): return pair.cdr
+
+@primitive('caar')
+def caar(pair): return pair.car.car
+
+@primitive('cadr')
+def caar(pair): return pair.cdr.car
+
+@primitive('cdar')
+def caar(pair): return pair.car.cdr
+
+@primitive('cdr')
+def caar(pair): return pair.cdr.cdr
+
 @primitive('vector-ref')
 def vector_ref(vec, index):
     return vec.vector_ref(index)

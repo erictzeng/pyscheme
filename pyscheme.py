@@ -38,39 +38,51 @@ def tokenize_list(input_string):
     # Returns a list of tokens, leaving parenthesized expressions as is
     result = []
     while input_string:
+        # SPECIAL CASES
+        # Handle the shorthand quote
+        quote = re.match(r"'", input_string)
+        if quote:
+            input_string = input_string[1:]
+
+        # Match the beginning of the input
         whitespace   = re.match(r" +", input_string)
         integer      = re.match(r"\d+", input_string)
         variable     = re.match(r"[!$%&*+-./:<=>?@^_~a-zA-Z]([!$%&*+-./:<=>?@^_~a-zA-Z0-9])*", input_string)
         boolean      = re.match(r"#[tf]", input_string)
         # Removes starting whitespace
         if whitespace:
-            input_string = input_string[len(whitespace.group()):]
+            token = None
+            index = len(whitespace.group())
         # Matches integers
         elif integer:
-            result += [data.IntLiteral(int(integer.group()))]
-            input_string = input_string[len(integer.group()):]
+            token = data.IntLiteral(int(integer.group()))
+            index = len(integer.group())
         # Matches variables
         elif variable:
-            result += [data.Identifier(variable.group())]
-            input_string = input_string[len(variable.group()):]
+            token = data.Identifier(variable.group())
+            index = len(variable.group())
         # Matches booleans
         elif boolean:
-            result += [data.Boolean(boolean.group())]
-            input_string = input_string[len(boolean.group()):]
+            token = data.Boolean(boolean.group())
+            index = len(boolean.group())
         # Handles parenthesized expressions
         elif input_string[0] == '(':
             parencount = index = 1
             while parencount > 0:
-                if input_string[index] == '(':
-                    parencount += 1
-                if input_string[index] == ')':
-                    parencount -= 1
+                if input_string[index] == '(': parencount += 1
+                if input_string[index] == ')': parencount -= 1
                 index += 1
-            result += [input_string[:index]]
-            input_string = input_string[index:]
-            continue
+            token = input_string[:index]
+        # Should not reach this case
         else:
             return None
+
+        # Append the correct string to parse later
+        if quote:
+            result.append("(quote {0})".format(input_string[:index]))
+        elif token:
+            result.append(token)
+        input_string = input_string[index:]
     return result
 
 
@@ -92,10 +104,6 @@ def repl(prompt = "pyscheme > "):
             val = make_list(input_string)
             for element in val:
                 print val.car.eval(glob)
-
-#            while not val == data.Nil():
-#                print val.car.eval(glob)
-#                val = val.cdr
         except Exception as e:
             print "ERROR:", e.args[0]
             continue
