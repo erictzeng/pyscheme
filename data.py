@@ -105,6 +105,14 @@ class ConsPair(SchemeDatum):
             current = current.cdr
         return oper.apply(env, args)
 
+    def __iter__(self):
+        def iterator():
+            current = self
+            while not current == Nil():
+                yield current.car
+                current = self.cdr
+        return iterator()
+
 @util.singleton
 class Nil(SchemeDatum):
     def __repr__(self):

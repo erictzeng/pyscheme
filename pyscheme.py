@@ -19,8 +19,6 @@ import data
 import env
 import prim
 import re
-import traceback
-import specialforms
 
 def tokenize(s):
     return s.replace('(', ' ( ').replace(')', ' ) ').split()
@@ -92,9 +90,12 @@ def repl(prompt = "pyscheme > "):
                     check = _check_input_parens(input_string)
                     continue
             val = make_list(input_string)
-            while not val == data.Nil():
+            for element in val:
                 print val.car.eval(glob)
-                val = val.cdr
+
+#            while not val == data.Nil():
+#                print val.car.eval(glob)
+#                val = val.cdr
         except Exception as e:
             print "ERROR:", e.args[0]
             continue
