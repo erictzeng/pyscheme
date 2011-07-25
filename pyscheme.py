@@ -88,7 +88,7 @@ def repl(prompt = "pyscheme > "):
                 if check == -1:
                     raise Exception("Mismatched parens: {0}".format(input_string))
                 elif check > 0:
-                    input_string += raw_input("." * (len(prompt) - 1) + " ")
+                    input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
                     check = _check_input_parens(input_string)
                     continue
             val = make_list(input_string)
