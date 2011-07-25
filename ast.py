@@ -21,7 +21,22 @@ class IntLiteral(object):
         self.val = val
 
     def eval(self, env):
-        return self.val
+        return self
+
+    def __add__(self, num):
+        return IntLiteral(self.val + num.val)
+
+    def __sub__(self, num):
+        return IntLiteral(self.val - num.val)
+
+    def __mul__(self, num):
+        return IntLiteral(self.val * num.val)
+    
+    def __div__(self, num):
+        return IntLiteral(self.val / num.val)
+
+    def __neg__(self):
+        return IntLiteral(-self.val)
 
     def __str__(self):
         return str(self.val)

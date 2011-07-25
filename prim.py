@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import operator
 
+import ast
 import env
 import data
 import util
@@ -40,11 +41,11 @@ primitive('nil', "variable")(data.Nil())
 ## Primitive functions
 @primitive('+')
 def plus(*args):
-    return sum(args)
+    return sum(args, ast.IntLiteral(0))
 
 @primitive('-')
 def minus(*args):
-    return args[0] - sum(args[1:]) if len(args) > 0 else -args[0]
+    return args[0] - sum(args[1:], ast.IntLiteral(0)) if len(args) > 1 else -args[0]
 
 @primitive('*')
 def multiply(*args):
@@ -52,8 +53,8 @@ def multiply(*args):
 
 @primitive('/')
 def divide(*args):
-    return float(args[0]) / reduce(operator.mul, args[1:]) \
-        if len(args) > 0 else 1/args[0]
+    return args[0] / reduce(operator.mul, args[1:]) \
+        if len(args) > 1 else ast.IntLiteral(1)/args[0]
 
 ## List Procedures #####################################################
 @primitive('set-car!')
@@ -67,11 +68,11 @@ def set_cdr_bang(cons_pair, new_cdr):
 @primitive('list')
 def scheme_list(*args):
     if len(args) == 0:
-        return Nil()
+        return data.Nil()
     else:
         return reduce(lambda accum, next: cons(next, accum),
                       args[::-1],
-                      None)
+                      data.Nil())
 
 @primitive('append!')
 def append_bang(list1, list2):
