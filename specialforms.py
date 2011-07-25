@@ -14,38 +14,52 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+import operator
 
+import env
 import data
+import util
 
-def set_bang(var, val, env):
+def specialform(name, type="function"):
+    def decorator(arg):
+        glob = env.GlobalEnv()
+        obj = data.SpecialForm(name, arg)
+        glob.new_var(name, obj)
+        return arg
+    return decorator
+
+
+@specialform('set!')
+def set_bang(env, var, val):
     env.__setitem__(var.eval(env), val.eval(env))
 
-def let(var_val_pairs, body, env):
+@specialform('let')
+def let(env, var_val_pairs, body):
     vars_and_vals = zip(var_val_pairs.items)
-    vars = var.name for var in vars_and_vals[0]
-    vals = val.eval(env) for val in vars_and_vals[1]
-    new_lambda = Lambda(vars, body, env)
+    let_vars = [var.name for var in vars_and_vals[0]]
+    vals = [val.eval(env) for val in vars_and_vals[1]]
+    new_lambda = Lambda(let_vars, body, env)
     new_lambda._apply_evaluated(vals)
 
-def define():
+@specialform('define')
+def define(env):
     pass
 
-def _and(*args, env):
-    for arg in args:
-        if arg.eval(env) == False:
-            return data.Bool("#f")
-    return args[-1]
+@specialform('and')
+def _and(env, *args):
+    args = map(lambda arg: arg.eval(env), args)
+    return reduce(lambda x, y: x and y, args)
 
-def _or(*args, env):
-    for arg in args:
-        if arg.eval(env) == True:
-            return data.Bool("#t")
-    return data.Bool("#f")
+@specialform('or')
+def _or(env, *args):
+    args = map(lambda arg: arg.eval(env), args)
+    return reduce(lambda x, y: x or y, args)
 
-def _if(condition, true_case, false_case, env):
-    if condition.eval(env).eval(env) != "#f":
+@specialform('if')
+def _if(env, condition, true_case, false_case):
+    if condition.eval(env):
         return true_case.eval(env)
-    elif false_case is None:
-        return None()
+#    elif false_case == None:
+#        return None
     else:
         return false_case.eval(env)
