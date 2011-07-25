@@ -113,7 +113,7 @@ class ConsPair(SchemeDatum):
             current = self
             while not current == Nil():
                 yield current.car
-                current = self.cdr
+                current = current.cdr
         return iterator()
 
 @util.singleton
