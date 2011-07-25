@@ -23,7 +23,16 @@ import pyscheme
 
 glob = GlobalEnv()
 
+def pyscheme_eval(stmt):
+    return pyscheme.make_list(stmt).car.eval(glob)
+
 class LambdaNoArgsTestCase(unittest.TestCase):
     
     def testLambda(self):
         self.assertEquals(pyscheme.make_list("((lambda () 3))").car.eval(glob), intl(3))
+
+
+class LambdaMultipleBodyStmtsTestCase(unittest.TestCase):
+    
+    def testLambda(self):
+        self.assertEquals(pyscheme_eval("((lambda () 1 2 3))"), intl(3))

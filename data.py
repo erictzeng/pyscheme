@@ -78,7 +78,7 @@ class Lambda(Procedure):
         new_env = env.Env(self.env)
         new_env.update(zip(self.params, args))
         for expr in self.body[:-1]:
-            self.body.eval(new_env)
+            expr.eval(new_env)
         return self.body[-1].eval(new_env)
 
 
