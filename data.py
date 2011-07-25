@@ -121,6 +121,12 @@ class Nil(SchemeDatum):
     def __repr__(self):
         return "()"
 
+    def __iter__(self):
+        def generator():
+            return
+            yield
+        return generator()
+
 class Vector(SchemeDatum):
     
     def __init__(self):
