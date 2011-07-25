@@ -19,7 +19,6 @@ import data
 import env
 import prim
 import re
-import specialforms
 
 def tokenize(s):
     return s.replace('(', ' ( ').replace(')', ' ) ').split()
