@@ -32,6 +32,10 @@ def primitive(name, type="function"):
         return arg
     return decorator
 
+@primitive('exit')
+def scheme_exit(*args):
+    exit()
+
 ########################################################################
 ## Nil
 
