@@ -35,7 +35,8 @@ class SpecialForm(Callable):
 
 class Procedure(Callable):
     
-    def apply(self, args, env):
+    def apply(self, env, args):
+        
         args = [arg.eval(env) for arg in args]
         return self._apply_evaluated(args)
     
