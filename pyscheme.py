@@ -75,37 +75,60 @@ def tokenize_list(input):
 # STUFF FOR TESTING, REMOVE LATER
 glob = env.GlobalEnv()
 
-def make_ast(s):
-    tokens = tokenize(s)
-    return read(tokens)
+#def make_ast(s):
+#    tokens = tokenize(s)
+#    return read(tokens)
 
-def read(tokens):
-    token = tokens.pop(0)
-    try:
-        num = int(token)
-        return ast.IntLiteral(num)
-    except ValueError, TypeError:
-        if token == "(":
-            token_list = []
-            while tokens[0] != ")":
-                token_list.append(read(tokens))
-            tokens.pop(0)
-            return ast.ExpList(*token_list)
-        elif token == ")":
-            raise SyntaxError("mismatched parens")
-        else:
-            return ast.Identifier(token)
+#def read(tokens):
+#    token = tokens.pop(0)
+#    try:
+#        num = int(token)
+#        return ast.IntLiteral(num)
+#    except ValueError, TypeError:
+#        if token == "(":
+#            token_list = []
+#            while tokens[0] != ")":
+#                token_list.append(read(tokens))
+#            tokens.pop(0)
+#            return ast.ExpList(*token_list)
+#        elif token == ")":
+#            raise SyntaxError("mismatched parens")
+#        else:
+#            return ast.Identifier(token)
 
 def repl(prompt = "pyscheme > "):
     while True:
         input_string = raw_input(prompt)
-        if input_string == "(exit)":
-            exit()
-        else:
+        check = _check_input_parens(input_string)
+        try:
+            while(not check == 0):
+                if check == -1:
+                    raise Exception("Mismatched parens: {0}".format(input_string))
+                elif check > 0:
+                    input_string += raw_input()
+                    check = _check_input_parens(input_string)
+                    continue
             val = make_list(input_string)
             while not val == data.Nil():
                 print val.car.eval(glob)
                 val = val.cdr
+        except Exception as e:
+            print e.args[0]
+            continue
+
+def _check_input_parens(input_string):
+    # Returns
+    #  * -1 if invalid parens
+    #  * number of right parens minus number of left parens otherwise
+    parencount = 0
+    for char in input_string:
+        if char == "(":
+            parencount += 1
+        elif char == ")":
+            parencount -= 1
+        if parencount < 0:
+            return parencount
+    return parencount
 
 if __name__ == "__main__":
     repl()

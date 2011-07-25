@@ -45,22 +45,22 @@ class Identifier(object):
         return "[Identifier {0}]".format(self.name)
 
 
-class ExpList(object):
-    
-    def __init__(self, *items):
-        self.items = items
-    
-    def eval(self, env):
-        oper = self.items[0].eval(env)
-        return oper.apply(self.items[1:], env)
-        
-    def __str__(self):
-        items_str = ' '.join(str(node) for node in self.items)
-        return "({0})".format(items_str)
-
-    def __repr__(self):
-        items_str = ' '.join(str(node) for node in self.items)
-        return "[ExpList {0}]".format(items_str)
+#class ExpList(object):
+#    
+#    def __init__(self, *items):
+#        self.items = items
+#    
+#    def eval(self, env):
+#        oper = self.items[0].eval(env)
+#        return oper.apply(self.items[1:], env)
+#        
+#    def __str__(self):
+#        items_str = ' '.join(str(node) for node in self.items)
+#        return "({0})".format(items_str)
+#
+#    def __repr__(self):
+#        items_str = ' '.join(str(node) for node in self.items)
+#        return "[ExpList {0}]".format(items_str)
 
 
 class Boolean(object):
