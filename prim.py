@@ -20,28 +20,72 @@ import env
 import data
 import util
 
-def primitive(name, type="function"):
-    def decorator(arg):
-        glob = env.GlobalEnv()
-        if type == "function":
-            obj = data.Primitive(name, arg)
-        else:
-            obj = arg
-        glob.new_var(name, obj)
-        return arg
+def make_global_dec(cls):
+    def decorator(name):
+        def add_to_global(py_proc):
+            glob = env.GlobalEnv()
+            scheme_proc = cls(name, py_proc)
+            glob.new_var(name, scheme_proc)
+            return py_proc
+        return add_to_global
     return decorator
+
+primitive = make_global_dec(data.Primitive)
+specialform = make_global_dec(data.SpecialForm)
+
+# Global variables
+
+glob = env.GlobalEnv()
+
+glob.new_var('nil', data.Nil())
+glob.new_var('true', data.Boolean("#t"))
+glob.new_var('false', data.Boolean("#f"))
+
+
+# Special forms
+
+@specialform('set!')
+def set_bang(env, var, val):
+    env.__setitem__(var.eval(env), val.eval(env))
+
+@specialform('let')
+def let(env, var_val_pairs, body):
+    vars_and_vals = zip(var_val_pairs.items)
+    let_vars = [var.name for var in vars_and_vals[0]]
+    vals = [val.eval(env) for val in vars_and_vals[1]]
+    new_lambda = Lambda(let_vars, body, env)
+    new_lambda._apply_evaluated(vals)
+
+@specialform('define')
+def define(env):
+    pass
+
+@specialform('and')
+def _and(env, *args):
+    args = map(lambda arg: arg.eval(env), args)
+    return reduce(lambda x, y: x and y, args)
+
+@specialform('or')
+def _or(env, *args):
+    args = map(lambda arg: arg.eval(env), args)
+    return reduce(lambda x, y: x or y, args)
+
+@specialform('if')
+def _if(env, condition, true_case, false_case):
+    if condition.eval(env):
+        return true_case.eval(env)
+#    elif false_case == None:
+#        return None
+    else:
+        return false_case.eval(env)
+
+
+# Primitive functions
 
 @primitive('exit')
 def scheme_exit(*args):
     exit()
 
-########################################################################
-## Nil
-
-primitive('nil', "variable")(data.Nil())
-
-########################################################################
-## Primitive functions
 @primitive('+')
 def plus(*args):
     return sum(args, data.IntLiteral(0))
@@ -59,7 +103,6 @@ def divide(*args):
     return args[0] / reduce(operator.mul, args[1:]) \
         if len(args) > 1 else data.IntLiteral(1)/args[0]
 
-## List Procedures #####################################################
 @primitive('set-car!')
 def set_car_bang(cons_pair, new_car):
     cons_pair.car = new_car
@@ -98,7 +141,6 @@ def scheme_append(list1, list2):
 def cons(car, cdr):
     return data.ConsPair(car, cdr)
 
-## Vector procedures ###################################################
 @primitive('vector-ref')
 def vector_ref(vec, index):
     return vec.vector_ref(index)
