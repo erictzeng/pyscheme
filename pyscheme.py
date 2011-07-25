@@ -20,16 +20,17 @@ import env
 import prim
 import re
 
-def tokenize(s):
-    return s.replace('(', ' ( ').replace(')', ' ) ').split()
-
 def make_list(input):
     # Input: string
     tokenized = tokenize_list(input)
     expression_list = data.Nil()
-    for token in reversed(tokenized):
+    while tokenized:
+        token = tokenized.pop()
         if isinstance(token, str):
-            expression_list = data.ConsPair(make_list(token[1:-1]), expression_list)
+            if token == ".":
+                expression_list = data.ConsPair(tokenized.pop(), expression_list.car)
+            else:
+                expression_list = data.ConsPair(make_list(token[1:-1]), expression_list)
         else:
             expression_list = data.ConsPair(token, expression_list)
     return expression_list
@@ -47,6 +48,7 @@ def tokenize_list(input_string):
         # Match the beginning of the input
         whitespace   = re.match(r" +", input_string)
         integer      = re.match(r"\d+", input_string)
+        dot          = re.match(r"\.", input_string)
         variable     = re.match(r"[!$%&*+-./:<=>?@^_~a-zA-Z]([!$%&*+-./:<=>?@^_~a-zA-Z0-9])*", input_string)
         boolean      = re.match(r"#[tf]", input_string)
         # Removes starting whitespace
@@ -57,6 +59,10 @@ def tokenize_list(input_string):
         elif integer:
             token = data.IntLiteral(int(integer.group()))
             index = len(integer.group())
+        # Matches the dot in literal pairs
+        elif dot:
+            token = "."
+            index = 1
         # Matches variables
         elif variable:
             token = data.Identifier(variable.group())

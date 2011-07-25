@@ -173,7 +173,7 @@ def caar(pair): return pair.cdr.car
 @primitive('cdar')
 def caar(pair): return pair.car.cdr
 
-@primitive('cdr')
+@primitive('cddr')
 def caar(pair): return pair.cdr.cdr
 
 @primitive('vector-ref')
