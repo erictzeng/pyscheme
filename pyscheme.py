@@ -19,6 +19,7 @@ import data
 import env
 import prim
 import re
+import specialforms
 
 def tokenize(s):
     return s.replace('(', ' ( ').replace(')', ' ) ').split()
@@ -38,10 +39,10 @@ def tokenize_list(input_string):
     # Returns a list of tokens, leaving parenthesized expressions as is
     result = []
     while input_string:
-        whitespace = re.match(r" +", input_string)
-        integer    = re.match(r"\d+", input_string)
-        variable   = re.match(r"[!$%&*+-./:<=>?@^_~a-zA-Z]([!$%&*+-./:<=>?@^_~a-zA-Z0-9])*", input_string)
-        boolean    = re.match(r"#[tf]", input_string)
+        whitespace   = re.match(r" +", input_string)
+        integer      = re.match(r"\d+", input_string)
+        variable     = re.match(r"[!$%&*+-./:<=>?@^_~a-zA-Z]([!$%&*+-./:<=>?@^_~a-zA-Z0-9])*", input_string)
+        boolean      = re.match(r"#[tf]", input_string)
         # Removes starting whitespace
         if whitespace:
             input_string = input_string[len(whitespace.group()):]

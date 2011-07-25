@@ -29,7 +29,7 @@ class SpecialForm(Callable):
         self.name = name
         self.proc = proc
         
-    def apply(self, args, env):
+    def apply(self, env, args):
         return self.proc(env, *args)
 
 
@@ -95,7 +95,7 @@ class ConsPair(object):
         while not current == Nil():
             args.append(current.car)
             current = current.cdr
-        return oper.apply(args, env)
+        return oper.apply(env, args)
 
 @util.singleton
 class Nil(object):
@@ -182,16 +182,16 @@ class Identifier(object):
 class Boolean(object):
     
     def __init__(self, value):
-        self.val = value
+        self.value = value
 
     def eval(self, env):
         return self
 
     def __str__(self):
-        return "{0}".format(self.val)
+        return "{0}".format(self.value)
 
     def __repr__(self):
-        return "[Boolean {0}]".format(self.val)
+        return "[Boolean {0}]".format(self.value)
 
     def __nonzero__(self):
         return self.value == '#t'
