@@ -17,14 +17,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 
+from data import IntLiteral as intl
 import prim
 
 class PrimitiveSuccessTestCase(unittest.TestCase):
 
     def testPlus(self):
-        self.assertEquals(prim.plus(1, 2, 3), 6)
+        self.assertEquals(prim.plus(intl(1), intl(2), intl(3)), intl(6))
 
 class PrimitiveFailureTestCase(unittest.TestCase):
 
     def testPlus(self):
-        self.assertRaises(TypeError, prim.plus, [1, "two", 3])
+        self.assertRaises(TypeError, prim.plus, intl(1), "two", intl(3))

@@ -16,7 +16,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import operator
 
-import ast
 import env
 import data
 import util
@@ -45,11 +44,11 @@ primitive('nil', "variable")(data.Nil())
 ## Primitive functions
 @primitive('+')
 def plus(*args):
-    return sum(args, ast.IntLiteral(0))
+    return sum(args, data.IntLiteral(0))
 
 @primitive('-')
 def minus(*args):
-    return args[0] - sum(args[1:], ast.IntLiteral(0)) if len(args) > 1 else -args[0]
+    return args[0] - sum(args[1:], data.IntLiteral(0)) if len(args) > 1 else -args[0]
 
 @primitive('*')
 def multiply(*args):
@@ -58,7 +57,7 @@ def multiply(*args):
 @primitive('/')
 def divide(*args):
     return args[0] / reduce(operator.mul, args[1:]) \
-        if len(args) > 1 else ast.IntLiteral(1)/args[0]
+        if len(args) > 1 else data.IntLiteral(1)/args[0]
 
 ## List Procedures #####################################################
 @primitive('set-car!')
