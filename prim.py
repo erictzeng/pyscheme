@@ -79,6 +79,10 @@ def _if(env, condition, true_case, false_case):
     else:
         return false_case.eval(env)
 
+@specialform('quote')
+def quote(env, arg):
+    return arg
+
 
 # Primitive functions
 
