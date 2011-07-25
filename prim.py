@@ -83,7 +83,7 @@ def append_bang(list1, list2):
     lastPair = None
     currPair = list1
     while True:
-        if currPair.cdr == Nil():
+        if currPair.cdr == data.Nil():
             lastPair = currPair
         else:
             currPair = currPair.cdr
