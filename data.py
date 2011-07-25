@@ -30,7 +30,7 @@ class SpecialForm(Callable):
         self.proc = proc
         
     def apply(self, args, env):
-        return self.proc(*args)
+        return self.proc(env, *args)
 
 
 class Procedure(Callable):
