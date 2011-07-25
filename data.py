@@ -17,7 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import util
 
-class Callable(object):
+class SchemeDatum(object):
+    def eval(self, env):
+        raise NotImplementedError
+    
+    def __nonZero__(self):
+        return True
+
+class Callable(SchemeDatum):
 
     def apply(self, args, env):
         raise NotImplementedError
@@ -72,7 +79,7 @@ class Lambda(Procedure):
         self.body.eval(env)
 
 
-class ConsPair(object):
+class ConsPair(SchemeDatum):
 
     def __init__(self, car, cdr):
         self.car = car
@@ -99,11 +106,11 @@ class ConsPair(object):
         return oper.apply(env, args)
 
 @util.singleton
-class Nil(object):
+class Nil(SchemeDatum):
     def __repr__(self):
         return "()"
 
-class Vector(object):
+class Vector(SchemeDatum):
     
     def __init__(self):
         pass
@@ -132,7 +139,7 @@ class Vector(object):
             self[index] = new_val
 
 
-class IntLiteral(object):
+class IntLiteral(SchemeDatum):
     
     def __init__(self, val):
         self.val = val
@@ -165,7 +172,7 @@ class IntLiteral(object):
         return "[IntLiteral {0}]".format(self.val)
 
 
-class Identifier(object):
+class Identifier(SchemeDatum):
     
     def __init__(self, name):
         self.name = name
@@ -180,7 +187,7 @@ class Identifier(object):
         return "[Identifier {0}]".format(self.name)
 
 
-class Boolean(object):
+class Boolean(SchemeDatum):
     
     def __init__(self, value):
         self.value = value
