@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import ast
+import data
 
 def set_bang(var, val, env):
     env.__setitem__(var.eval(env), val.eval(env))
@@ -33,14 +33,14 @@ def define():
 def _and(*args, env):
     for arg in args:
         if arg.eval(env) == False:
-            return ast.Bool("#f")
+            return data.Bool("#f")
     return args[-1]
 
 def _or(*args, env):
     for arg in args:
         if arg.eval(env) == True:
-            return ast.Bool("#t")
-    return ast.Bool("#f")
+            return data.Bool("#t")
+    return data.Bool("#f")
 
 def _if(condition, true_case, false_case, env):
     if condition.eval(env).eval(env) != "#f":

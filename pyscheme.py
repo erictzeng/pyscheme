@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import ast
 import data
 import env
 import prim
@@ -48,12 +47,12 @@ def tokenize_list(input):
             continue
         # Matches integers
         elif integer:
-            result += [ast.IntLiteral(int(integer.group()))]
+            result += [data.IntLiteral(int(integer.group()))]
             input = input[len(integer.group()):]
             continue
         # Matches variables
         elif variable:
-            result += [ast.Identifier(variable.group())]
+            result += [data.Identifier(variable.group())]
             input = input[len(variable.group()):]
         # Handles parenthesized expressions
         elif input[0] == '(':
