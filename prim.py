@@ -114,6 +114,12 @@ def divide(*args):
     return args[0] / reduce(operator.mul, args[1:]) \
         if len(args) > 1 else data.IntLiteral(1)/args[0]
 
+@primitive('=')
+def equal(*args):
+    if len(args) == 0:
+        raise Exception("too few parameters")
+    return data.Boolean("#t") if args.count(args[0]) == len(args) else data.Boolean("#f")
+
 @primitive('set-car!')
 def set_car_bang(cons_pair, new_car):
     cons_pair.car = new_car
