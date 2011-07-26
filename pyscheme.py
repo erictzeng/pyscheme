@@ -19,18 +19,18 @@ import data
 import env
 import prim
 import re
-import specialforms
-
-def tokenize(s):
-    return s.replace('(', ' ( ').replace(')', ' ) ').split()
 
 def make_list(input):
     # Input: string
     tokenized = tokenize_list(input)
     expression_list = data.Nil()
-    for token in reversed(tokenized):
+    while tokenized:
+        token = tokenized.pop()
         if isinstance(token, str):
-            expression_list = data.ConsPair(make_list(token[1:-1]), expression_list)
+            if token == ".":
+                expression_list = data.ConsPair(tokenized.pop(), expression_list.car)
+            else:
+                expression_list = data.ConsPair(make_list(token[1:-1]), expression_list)
         else:
             expression_list = data.ConsPair(token, expression_list)
     return expression_list
@@ -39,65 +39,61 @@ def tokenize_list(input_string):
     # Returns a list of tokens, leaving parenthesized expressions as is
     result = []
     while input_string:
+        # SPECIAL CASES
+        # Handle the shorthand quote
+        quote = re.match(r"'", input_string)
+        if quote:
+            input_string = input_string[1:]
+
+        # Match the beginning of the input
         whitespace   = re.match(r" +", input_string)
         integer      = re.match(r"\d+", input_string)
+        dot          = re.match(r"\.", input_string)
         variable     = re.match(r"[!$%&*+-./:<=>?@^_~a-zA-Z]([!$%&*+-./:<=>?@^_~a-zA-Z0-9])*", input_string)
         boolean      = re.match(r"#[tf]", input_string)
         # Removes starting whitespace
         if whitespace:
-            input_string = input_string[len(whitespace.group()):]
+            token = None
+            index = len(whitespace.group())
         # Matches integers
         elif integer:
-            result += [data.IntLiteral(int(integer.group()))]
-            input_string = input_string[len(integer.group()):]
+            token = data.IntLiteral(int(integer.group()))
+            index = len(integer.group())
+        # Matches the dot in literal pairs
+        elif dot:
+            token = "."
+            index = 1
         # Matches variables
         elif variable:
-            result += [data.Identifier(variable.group())]
-            input_string = input_string[len(variable.group()):]
+            token = data.Identifier(variable.group())
+            index = len(variable.group())
         # Matches booleans
         elif boolean:
-            result += [data.Boolean(boolean.group())]
-            input_string = input_string[len(boolean.group()):]
+            token = data.Boolean(boolean.group())
+            index = len(boolean.group())
         # Handles parenthesized expressions
         elif input_string[0] == '(':
             parencount = index = 1
             while parencount > 0:
-                if input_string[index] == '(':
-                    parencount += 1
-                if input_string[index] == ')':
-                    parencount -= 1
+                if input_string[index] == '(': parencount += 1
+                if input_string[index] == ')': parencount -= 1
                 index += 1
-            result += [input_string[:index]]
-            input_string = input_string[index:]
-            continue
+            token = input_string[:index]
+        # Should not reach this case
         else:
             return None
+
+        # Append the correct string to parse later
+        if quote:
+            result.append("(quote {0})".format(input_string[:index]))
+        elif token:
+            result.append(token)
+        input_string = input_string[index:]
     return result
 
 
 # STUFF FOR TESTING, REMOVE LATER
 glob = env.GlobalEnv()
-
-#def make_ast(s):
-#    tokens = tokenize(s)
-#    return read(tokens)
-
-#def read(tokens):
-#    token = tokens.pop(0)
-#    try:
-#        num = int(token)
-#        return ast.IntLiteral(num)
-#    except ValueError, TypeError:
-#        if token == "(":
-#            token_list = []
-#            while tokens[0] != ")":
-#                token_list.append(read(tokens))
-#            tokens.pop(0)
-#            return ast.ExpList(*token_list)
-#        elif token == ")":
-#            raise SyntaxError("mismatched parens")
-#        else:
-#            return ast.Identifier(token)
 
 def repl(prompt = "pyscheme > "):
     while True:
@@ -108,15 +104,14 @@ def repl(prompt = "pyscheme > "):
                 if check == -1:
                     raise Exception("Mismatched parens: {0}".format(input_string))
                 elif check > 0:
-                    input_string += raw_input()
+                    input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
                     check = _check_input_parens(input_string)
                     continue
             val = make_list(input_string)
-            while not val == data.Nil():
+            for element in val:
                 print val.car.eval(glob)
-                val = val.cdr
         except Exception as e:
-            print e.args[0]
+            print "ERROR:", e.args[0]
             continue
 
 def _check_input_parens(input_string):

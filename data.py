@@ -16,8 +16,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import util
+import env
 
-class Callable(object):
+class SchemeDatum(object):
+    def eval(self, env):
+        raise NotImplementedError
+    
+    def __nonZero__(self):
+        return True
+
+class Callable(SchemeDatum):
 
     def apply(self, args, env):
         raise NotImplementedError
@@ -35,7 +43,8 @@ class SpecialForm(Callable):
 
 class Procedure(Callable):
     
-    def apply(self, args, env):
+    def apply(self, env, args):
+        
         args = [arg.eval(env) for arg in args]
         return self._apply_evaluated(args)
     
@@ -66,12 +75,14 @@ class Lambda(Procedure):
     def _apply_evaluated(self, args):
         if len(args) != len(self.params):
             raise TypeError # TODO: fix
-        env = env.Env(self.env)
-        env.update(zip(self.params, args))
-        self.body.eval(env)
+        new_env = env.Env(self.env)
+        new_env.update(zip(self.params, args))
+        for expr in self.body[:-1]:
+            expr.eval(new_env)
+        return self.body[-1].eval(new_env)
 
 
-class ConsPair(object):
+class ConsPair(SchemeDatum):
 
     def __init__(self, car, cdr):
         self.car = car
@@ -97,12 +108,26 @@ class ConsPair(object):
             current = current.cdr
         return oper.apply(env, args)
 
+    def __iter__(self):
+        def iterator():
+            current = self
+            while not current == Nil():
+                yield current.car
+                current = current.cdr
+        return iterator()
+
 @util.singleton
-class Nil(object):
+class Nil(SchemeDatum):
     def __repr__(self):
         return "()"
 
-class Vector(object):
+    def __iter__(self):
+        def generator():
+            return
+            yield
+        return generator()
+
+class Vector(SchemeDatum):
     
     def __init__(self):
         pass
@@ -131,7 +156,7 @@ class Vector(object):
             self[index] = new_val
 
 
-class IntLiteral(object):
+class IntLiteral(SchemeDatum):
     
     def __init__(self, val):
         self.val = val
@@ -164,7 +189,7 @@ class IntLiteral(object):
         return "[IntLiteral {0}]".format(self.val)
 
 
-class Identifier(object):
+class Identifier(SchemeDatum):
     
     def __init__(self, name):
         self.name = name
@@ -179,7 +204,7 @@ class Identifier(object):
         return "[Identifier {0}]".format(self.name)
 
 
-class Boolean(object):
+class Boolean(SchemeDatum):
     
     def __init__(self, value):
         self.value = value
@@ -195,3 +220,15 @@ class Boolean(object):
 
     def __nonzero__(self):
         return self.value == '#t'
+
+
+class Promise(SchemeDatum):
+    
+    def __init__(self, expr, env):
+        self.expr = expr
+        self.env = env
+        self.forced = False
+        self.val = None
+        
+    def eval(self, env):
+        return self

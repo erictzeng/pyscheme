@@ -29,7 +29,7 @@ class Env(dict):
                 return env
             else:
                 env = env.next
-        raise KeyError(key)
+        raise Exception("Unbound variable: {0}".format(key))
 
     def __getitem__(self, key):
         env = self._find_env(key)
