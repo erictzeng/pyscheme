@@ -47,8 +47,10 @@ glob.new_var('false', data.Boolean("#f"))
 
 @specialform('and')
 def _and(env, *args):
-    args = map(lambda arg: arg.eval(env), args)
-    return reduce(lambda x, y: x and y, args)
+    for arg in args:
+        if not arg.eval(env):
+            return data.Bool("#f")
+    return args[-1]
 
 @specialform('define')
 def define(env, var, body):
@@ -85,8 +87,10 @@ def let(env, var_val_pairs, body):
 
 @specialform('or')
 def _or(env, *args):
-    args = map(lambda arg: arg.eval(env), args)
-    return reduce(lambda x, y: x or y, args)
+    for arg in args:
+        if arg.eval(env):
+            return data.Bool("#t")
+    return data.Bool("#f")
 
 @specialform('quote')
 def quote(env, arg):
