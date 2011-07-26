@@ -46,7 +46,7 @@ glob.new_var('false', data.Boolean("#f"))
 
 @specialform('set!')
 def set_bang(env, var, val):
-    env.__setitem__(var.eval(env), val.eval(env))
+    env.__setitem__(str(var), val.eval(env))
 
 @specialform('lambda')
 def _lambda(env, params, *body):
