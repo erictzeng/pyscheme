@@ -18,12 +18,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import util
 import env
 
+
+        
+        
 class SchemeDatum(object):
     def eval(self, env):
         raise NotImplementedError
     
     def __nonZero__(self):
         return True
+
+class SchemeNone(SchemeDatum):
+    def __init__(self):
+        pass
+
+    def eval(self, env):
+        return self
+
+    def __str__(self):
+        return "okay"
 
 class Callable(SchemeDatum):
 
@@ -213,7 +226,7 @@ class Boolean(SchemeDatum):
         return self
 
     def __str__(self):
-        return "{0}".format(self.value)
+        return self.value
 
     def __repr__(self):
         return "[Boolean {0}]".format(self.value)
