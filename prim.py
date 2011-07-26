@@ -91,6 +91,10 @@ def _if(env, condition, true_case, false_case):
 def quote(env, arg):
     return arg
 
+@specialform('delay')
+def delay(env, arg):
+    return data.Promise(arg, env)
+
 
 # Primitive functions
 
@@ -202,3 +206,11 @@ def make_vector(*args):
         return vec
     else:
         raise Exception("incorrect number of arguments")
+
+@primitive('force')
+def force(prom):
+    if prom.forced:
+        return prom.val
+    else:
+        prom.val = prom.expr.eval(prom.env)
+        return prom.val

@@ -220,3 +220,15 @@ class Boolean(SchemeDatum):
 
     def __nonzero__(self):
         return self.value == '#t'
+
+
+class Promise(SchemeDatum):
+    
+    def __init__(self, expr, env):
+        self.expr = expr
+        self.env = env
+        self.forced = False
+        self.val = None
+        
+    def eval(self, env):
+        return self
