@@ -44,9 +44,28 @@ glob.new_var('false', data.Boolean("#f"))
 
 # Special forms
 
-@specialform('set!')
-def set_bang(env, var, val):
-    env.__setitem__(str(var), val.eval(env))
+@specialform('and')
+def _and(env, *args):
+    args = map(lambda arg: arg.eval(env), args)
+    return reduce(lambda x, y: x and y, args)
+
+@specialform('define')
+def define(env, var, body):
+    env.new_var(str(var), body.eval(env))
+    return var
+
+@specialform('delay')
+def delay(env, arg):
+    return data.Promise(arg, env)
+
+@specialform('if')
+def _if(env, condition, true_case, false_case):
+    if condition.eval(env):
+        return true_case.eval(env)
+#    elif false_case == None:
+#        return None
+    else:
+        return false_case.eval(env)
 
 @specialform('lambda')
 def _lambda(env, params, *body):
@@ -63,37 +82,18 @@ def let(env, var_val_pairs, body):
     new_lambda = Lambda(let_vars, body, env)
     new_lambda._apply_evaluated(vals)
 
-@specialform('define')
-def define(env, var, body):
-    env.new_var(str(var), body.eval(env))
-    return var
-
-@specialform('and')
-def _and(env, *args):
-    args = map(lambda arg: arg.eval(env), args)
-    return reduce(lambda x, y: x and y, args)
-
 @specialform('or')
 def _or(env, *args):
     args = map(lambda arg: arg.eval(env), args)
     return reduce(lambda x, y: x or y, args)
 
-@specialform('if')
-def _if(env, condition, true_case, false_case):
-    if condition.eval(env):
-        return true_case.eval(env)
-#    elif false_case == None:
-#        return None
-    else:
-        return false_case.eval(env)
-
 @specialform('quote')
 def quote(env, arg):
     return arg
 
-@specialform('delay')
-def delay(env, arg):
-    return data.Promise(arg, env)
+@specialform('set!')
+def set_bang(env, var, val):
+    env.__setitem__(str(var), val.eval(env))
 
 
 # Primitive functions
