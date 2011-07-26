@@ -188,26 +188,26 @@ def caar(pair): return pair.cdr.cdr
 
 @primitive('vector-ref')
 def vector_ref(vec, index):
-    return vec.vector_ref(index)
+    return vec.vector_ref(index.val)
 
 @primitive('vector-set!')
 def vector_set_bang(vec, index, new_val):
-    vec.vector_set_bang(index, new_val)
+    vec.vector_set_bang(index.val, new_val.val)
 
 @primitive('vector')
 def vector(*args):
-    vec = Vector()
+    vec = data.Vector()
     vec.init_with_vals(*args)
     return vec
 
 @primitive('make-vector')
 def make_vector(*args):
-    vec = Vector()
+    vec = data.Vector()
     if len(args) == 1:  # i.e. (make-vector 3)
-        vec.init_with_length(args[0])
+        vec.init_with_length(args[0].val)
         return vec
     elif len(args) == 2:  # i.e. (make-vector 3 'hi)
-        vec.init_with_initial_val(args[0], args[1])
+        vec.init_with_initial_val(args[0].val, args[1].val)
         return vec
     else:
         raise Exception("incorrect number of arguments")

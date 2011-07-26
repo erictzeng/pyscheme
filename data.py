@@ -146,10 +146,11 @@ class Vector(SchemeDatum):
         pass
 
     def init_with_length(self, length):
+        self.values = [None]*length
         self.LENGTH = length
 
     def init_with_vals(self, *args):
-        self.values = args
+        self.values = [arg for arg in args]
         self.LENGTH = len(args)
 
     def init_with_initial_val(self, length, init_val):
@@ -166,8 +167,19 @@ class Vector(SchemeDatum):
         if (index < 0) or (index >= self.LENGTH):
             raise IndexError("index out of bounds")
         else:
-            self[index] = new_val
+            self.values[index] = new_val
 
+    def __str__(self):
+        display = ""
+        for value in self.values:
+            if value is None:
+                display += "#[unbound] "
+            else:
+                display += str(value) + " "
+        return "#({0})".format(display)
+
+     #   return "#({0})".format(" ".join(str(item) for item in self.values))
+        
 
 class IntLiteral(SchemeDatum):
     
@@ -245,3 +257,15 @@ class Promise(SchemeDatum):
         
     def eval(self, env):
         return self
+
+        
+
+    
+
+
+    
+
+
+
+
+        
