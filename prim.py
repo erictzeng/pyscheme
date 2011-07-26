@@ -220,3 +220,15 @@ def force(prom):
         prom.val = prom.expr.eval(prom.env)
         prom.forced = True
         return prom.val
+
+@primitive('cons-stream')
+def cons_stream(car, cdr):
+    return ConsPair(car, data.Promise(cdr, env))
+
+@primitive('stream-car')
+def stream_car(stream):
+    return stream.car
+
+@primitive('stream-cdr')
+def stream_cdr(stream):
+    return force(stream.cdr)
