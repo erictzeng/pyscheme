@@ -213,4 +213,5 @@ def force(prom):
         return prom.val
     else:
         prom.val = prom.expr.eval(prom.env)
+        prom.forced = True
         return prom.val
