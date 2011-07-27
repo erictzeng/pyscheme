@@ -19,6 +19,7 @@ import operator
 import env
 import data
 import util
+import exception
 
 def make_global_dec(cls):
     def decorator(name):
@@ -47,7 +48,7 @@ glob.new_var('false', data.Boolean("#f"))
 @specialform('and')
 def _and(env, *args):
     args = map(lambda arg: arg.eval(env), args)
-    return reduce(lambda x, y: x and y, args)
+    return reduce(lambda x, y: x and y, args, True)
 
 @specialform('define')
 def define(env, var, body):
@@ -85,7 +86,7 @@ def let(env, var_val_pairs, body):
 @specialform('or')
 def _or(env, *args):
     args = map(lambda arg: arg.eval(env), args)
-    return reduce(lambda x, y: x or y, args)
+    return reduce(lambda x, y: x or y, args, False)
 
 @specialform('quote')
 def quote(env, arg):
@@ -104,33 +105,59 @@ def scheme_exit(*args):
 
 @primitive('+')
 def plus(*args):
+    for arg in args:
+        if not isinstance(arg, data.IntLiteral):
+            raise exception.WrongArgumentType('+', 'numerical type', arg)
     return sum(args, data.IntLiteral(0))
 
 @primitive('-')
 def minus(*args):
+    if len(args) < 1:
+        raise exception.ArgumentCountError('-', 'one or more', '0')
+    for arg in args:
+        if not isinstance(arg, data.IntLiteral):
+            raise exception.WrongArgumentType('-', 'numerical type', arg)
     return args[0] - sum(args[1:], data.IntLiteral(0)) if len(args) > 1 else -args[0]
 
 @primitive('*')
 def multiply(*args):
+    for arg in args:
+        if not isinstance(arg, data.IntLiteral):
+            raise exception.WrongArgumentType('*', 'numerical type', arg)
     return reduce(operator.mul, args)
 
 @primitive('/')
 def divide(*args):
+    if len(args) < 1:
+        raise exception.ArgumentCountError('/', 'one or more', '0')
+    for arg in args:
+        if not isinstance(arg, data.IntLiteral):
+            raise exception.WrongArgumentType('/', 'numerical type', arg)
     return args[0] / reduce(operator.mul, args[1:]) \
         if len(args) > 1 else data.IntLiteral(1)/args[0]
 
 @primitive('=')
 def equal(*args):
     if len(args) == 0:
-        raise Exception("too few parameters")
+        raise exception.ArgumentCountError('=', 'one or more', '0')
     return data.Boolean("#t") if args.count(args[0]) == len(args) else data.Boolean("#f")
 
 @primitive('set-car!')
-def set_car_bang(cons_pair, new_car):
+def set_car_bang(*args):
+    if not len(args) == 2:
+        raise exception.ArgumentCountError('set-car!', 'exactly two', len(args))
+    cons_pair, new_car = args[0], args[1]
+    if not isinstance(cons_pair, data.ConsPair):
+        raise exception.WrongArgumentType('set-car!', 'pair', cons_pair)
     cons_pair.car = new_car
 
 @primitive('set-cdr!')
-def set_cdr_bang(cons_pair, new_cdr):
+def set_cdr_bang(*args):
+    if not len(args) == 2:
+        raise exception.ArgumentCountError('set-cdr!', 'exactly two', len(args))
+    cons_pair, new_cdr = args[0], args[1]
+    if not isinstance(cons_pair, data.ConsPair):
+        raise exception.WrongArgumentType('set-cdr!' 'pair', cons_pair)
     cons_pair.cdr = new_cdr
 
 @primitive('list')
