@@ -20,6 +20,7 @@ import env
 import data
 import util
 import exception
+import copy
 
 def make_global_dec(cls):
     def decorator(name):
@@ -174,7 +175,7 @@ def append_bang(list1, list2):
     lastPair = None
     currPair = list1
     while True:
-        if currPair.cdr == Nil():
+        if currPair.cdr == data.Nil():
             lastPair = currPair
         else:
             currPair = currPair.cdr
@@ -182,7 +183,7 @@ def append_bang(list1, list2):
 
 @primitive('append')
 def scheme_append(list1, list2):
-    new_list = copy.deepycopy(list1)
+    new_list = copy.deepcopy(list1)
     append_bang(new_list, list2)
     return new_list
 
@@ -210,26 +211,26 @@ def caar(pair): return pair.cdr.cdr
 
 @primitive('vector-ref')
 def vector_ref(vec, index):
-    return vec.vector_ref(index)
+    return vec.vector_ref(index.val)
 
 @primitive('vector-set!')
 def vector_set_bang(vec, index, new_val):
-    vec.vector_set_bang(index, new_val)
+    vec.vector_set_bang(index.val, new_val.val)
 
 @primitive('vector')
 def vector(*args):
-    vec = Vector()
+    vec = data.Vector()
     vec.init_with_vals(*args)
     return vec
 
 @primitive('make-vector')
 def make_vector(*args):
-    vec = Vector()
+    vec = data.Vector()
     if len(args) == 1:  # i.e. (make-vector 3)
-        vec.init_with_length(args[0])
+        vec.init_with_length(args[0].val)
         return vec
     elif len(args) == 2:  # i.e. (make-vector 3 'hi)
-        vec.init_with_initial_val(args[0], args[1])
+        vec.init_with_initial_val(args[0].val, args[1].val)
         return vec
     else:
         raise Exception("incorrect number of arguments")
@@ -242,3 +243,15 @@ def force(prom):
         prom.val = prom.expr.eval(prom.env)
         prom.forced = True
         return prom.val
+
+@primitive('cons-stream')
+def cons_stream(car, cdr):
+    return ConsPair(car, data.Promise(cdr, env))
+
+@primitive('stream-car')
+def stream_car(stream):
+    return stream.car
+
+@primitive('stream-cdr')
+def stream_cdr(stream):
+    return force(stream.cdr)

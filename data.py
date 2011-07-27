@@ -18,6 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import util
 import env
 
+
+        
+        
 class SchemeDatum(object):
     def eval(self, env):
         raise NotImplementedError
@@ -25,9 +28,19 @@ class SchemeDatum(object):
     def __nonZero__(self):
         return True
 
+class SchemeNone(SchemeDatum):
+    def __init__(self):
+        pass
+
+    def eval(self, env):
+        return self
+
+    def __str__(self):
+        return "okay"
+
 class Callable(SchemeDatum):
 
-    def apply(self, args, env):
+    def apply(self, env, args):
         raise NotImplementedError
 
 
@@ -133,10 +146,11 @@ class Vector(SchemeDatum):
         pass
 
     def init_with_length(self, length):
+        self.values = [None]*length
         self.LENGTH = length
 
     def init_with_vals(self, *args):
-        self.values = args
+        self.values = [arg for arg in args]
         self.LENGTH = len(args)
 
     def init_with_initial_val(self, length, init_val):
@@ -153,8 +167,19 @@ class Vector(SchemeDatum):
         if (index < 0) or (index >= self.LENGTH):
             raise IndexError("index out of bounds")
         else:
-            self[index] = new_val
+            self.values[index] = new_val
 
+    def __str__(self):
+        display = ""
+        for value in self.values:
+            if value is None:
+                display += "#[unbound] "
+            else:
+                display += str(value) + " "
+        return "#({0})".format(display)
+
+     #   return "#({0})".format(" ".join(str(item) for item in self.values))
+        
 
 class IntLiteral(SchemeDatum):
     
@@ -213,7 +238,7 @@ class Boolean(SchemeDatum):
         return self
 
     def __str__(self):
-        return "{0}".format(self.value)
+        return self.value
 
     def __repr__(self):
         return "[Boolean {0}]".format(self.value)
@@ -232,3 +257,15 @@ class Promise(SchemeDatum):
         
     def eval(self, env):
         return self
+
+        
+
+    
+
+
+    
+
+
+
+
+        
