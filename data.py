@@ -28,24 +28,21 @@ class SchemeDatum(object):
     def __nonZero__(self):
         return True
 
-class SchemeNone(SchemeDatum):
-    def __init__(self):
-        pass
+    def isPair(self):
+        return False
 
-    def eval(self, env):
-        return self
+    def isList(self):
+        return False
 
-    def __str__(self):
-        return "okay"
+    def isNumber(self):
+        return False
 
 class Callable(SchemeDatum):
-
     def apply(self, env, args):
         raise NotImplementedError
 
 
-class SpecialForm(Callable):
-    
+class SpecialForm(Callable):   
     def __init__(self, name, proc):
         self.name = name
         self.proc = proc
@@ -55,9 +52,7 @@ class SpecialForm(Callable):
 
 
 class Procedure(Callable):
-    
     def apply(self, env, args):
-        
         args = [arg.eval(env) for arg in args]
         return self._apply_evaluated(args)
     
@@ -66,7 +61,6 @@ class Procedure(Callable):
 
 
 class Primitive(Procedure):
-    
     def __init__(self, name, proc):
         self.name = name
         self.proc = proc
@@ -79,7 +73,6 @@ class Primitive(Procedure):
 
 
 class Lambda(Procedure):
-    
     def __init__(self, params, body, env):
         self.params = params
         self.body = body
@@ -96,7 +89,6 @@ class Lambda(Procedure):
 
 
 class ConsPair(SchemeDatum):
-
     def __init__(self, car, cdr):
         self.car = car
         self.cdr = cdr
@@ -129,6 +121,12 @@ class ConsPair(SchemeDatum):
                 current = current.cdr
         return iterator()
 
+    def isPair(self):
+        return True
+
+    def isList(self):
+        return self.cdr.isList()
+
 @util.singleton
 class Nil(SchemeDatum):
     def __repr__(self):
@@ -140,8 +138,10 @@ class Nil(SchemeDatum):
             yield
         return generator()
 
+    def isList(self):
+        return True
+
 class Vector(SchemeDatum):
-    
     def __init__(self):
         pass
 
@@ -182,7 +182,6 @@ class Vector(SchemeDatum):
         
 
 class IntLiteral(SchemeDatum):
-    
     def __init__(self, val):
         self.val = val
 
@@ -213,9 +212,10 @@ class IntLiteral(SchemeDatum):
     def __repr__(self):
         return "[IntLiteral {0}]".format(self.val)
 
+    def isNumber(self):
+        return True
 
 class Identifier(SchemeDatum):
-    
     def __init__(self, name):
         self.name = name
 
@@ -230,7 +230,6 @@ class Identifier(SchemeDatum):
 
 
 class Boolean(SchemeDatum):
-    
     def __init__(self, value):
         self.value = value
 
@@ -248,7 +247,6 @@ class Boolean(SchemeDatum):
 
 
 class Promise(SchemeDatum):
-    
     def __init__(self, expr, env):
         self.expr = expr
         self.env = env
@@ -257,15 +255,3 @@ class Promise(SchemeDatum):
         
     def eval(self, env):
         return self
-
-        
-
-    
-
-
-    
-
-
-
-
-        

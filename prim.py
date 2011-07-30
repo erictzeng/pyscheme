@@ -48,8 +48,10 @@ glob.new_var('false', data.Boolean("#f"))
 
 @specialform('and')
 def _and(env, *args):
-    args = map(lambda arg: arg.eval(env), args)
-    return reduce(lambda x, y: x and y, args, True)
+    for arg in args:
+        if not arg.eval(env):
+            return data.Bool("#f")
+    return args[-1]
 
 @specialform('define')
 def define(env, var, body):
@@ -86,8 +88,10 @@ def let(env, var_val_pairs, body):
 
 @specialform('or')
 def _or(env, *args):
-    args = map(lambda arg: arg.eval(env), args)
-    return reduce(lambda x, y: x or y, args, False)
+    for arg in args:
+        if arg.eval(env):
+            return data.Bool("#t")
+    return data.Bool("#f")
 
 @specialform('quote')
 def quote(env, arg):
@@ -107,7 +111,7 @@ def scheme_exit(*args):
 @primitive('+')
 def plus(*args):
     for arg in args:
-        if not isinstance(arg, data.IntLiteral):
+        if not arg.isNumber():
             raise exception.WrongArgumentType('+', 'numerical type', arg)
     return sum(args, data.IntLiteral(0))
 
@@ -116,14 +120,14 @@ def minus(*args):
     if len(args) < 1:
         raise exception.ArgumentCountError('-', 'one or more', '0')
     for arg in args:
-        if not isinstance(arg, data.IntLiteral):
+        if not arg.isNumber():
             raise exception.WrongArgumentType('-', 'numerical type', arg)
     return args[0] - sum(args[1:], data.IntLiteral(0)) if len(args) > 1 else -args[0]
 
 @primitive('*')
 def multiply(*args):
     for arg in args:
-        if not isinstance(arg, data.IntLiteral):
+        if not arg.isNumber():
             raise exception.WrongArgumentType('*', 'numerical type', arg)
     return reduce(operator.mul, args)
 
@@ -132,7 +136,7 @@ def divide(*args):
     if len(args) < 1:
         raise exception.ArgumentCountError('/', 'one or more', '0')
     for arg in args:
-        if not isinstance(arg, data.IntLiteral):
+        if not arg.isNumber():
             raise exception.WrongArgumentType('/', 'numerical type', arg)
     return args[0] / reduce(operator.mul, args[1:]) \
         if len(args) > 1 else data.IntLiteral(1)/args[0]
@@ -148,7 +152,7 @@ def set_car_bang(*args):
     if not len(args) == 2:
         raise exception.ArgumentCountError('set-car!', 'exactly two', len(args))
     cons_pair, new_car = args[0], args[1]
-    if not isinstance(cons_pair, data.ConsPair):
+    if not cons_pair.isPair():
         raise exception.WrongArgumentType('set-car!', 'pair', cons_pair)
     cons_pair.car = new_car
 
@@ -157,29 +161,33 @@ def set_cdr_bang(*args):
     if not len(args) == 2:
         raise exception.ArgumentCountError('set-cdr!', 'exactly two', len(args))
     cons_pair, new_cdr = args[0], args[1]
-    if not isinstance(cons_pair, data.ConsPair):
-        raise exception.WrongArgumentType('set-cdr!' 'pair', cons_pair)
+    if not cons_pair.isPair():
+        raise exception.WrongArgumentType('set-cdr!', 'pair', cons_pair)
     cons_pair.cdr = new_cdr
 
 @primitive('list')
 def scheme_list(*args):
-    if len(args) == 0:
-        return data.Nil()
-    else:
-        return reduce(lambda accum, next: cons(next, accum),
-                      args[::-1],
-                      data.Nil())
+    return reduce(lambda accum, next: cons(next, accum), args[::-1], data.Nil())
 
 @primitive('append!')
-def append_bang(list1, list2):
-    lastPair = None
-    currPair = list1
-    while True:
-        if currPair.cdr == data.Nil():
-            lastPair = currPair
-        else:
-            currPair = currPair.cdr
-    lastPair.cdr = list2
+def append_bang(*args):
+    for element in args[:-1]:
+        if not element.isList():
+            raise exception.WrongArgumentType('append!', 'list', element)
+    if len(args) == 0:
+        return data.Nil()
+    elif len(args) == 1:
+        return args[0]
+    else:
+        front = current = args[0]
+        for element in args[1:]:
+            while not current.cdr == data.Nil():
+                current = current.cdr
+            if not element.isList():
+                current.cdr = data.ConsPair(element, data.Nil())
+            else:
+                current.cdr = element
+            current = current.cdr
 
 @primitive('append')
 def scheme_append(list1, list2):
