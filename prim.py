@@ -56,6 +56,13 @@ def _and(env, *args):
             return data.Bool("#f")
     return args[-1]
 
+@specialform('or')
+def _or(env, *args):
+    for arg in args:
+        if arg.eval(env):
+            return arg
+    return data.Bool("#f")
+
 @specialform('define')
 def define(env, *args):
     if not len(args) == 2:
@@ -74,6 +81,13 @@ def define(env, *args):
         raise exception.WrongArgumentTypeError('define', 'variable or function', var)
     return var
 
+@specialform('lambda')
+def _lambda(env, *args):
+    if len(args) < 2:
+        raise exception.ArgumentCountError('lambda', 'two or more', len(args))
+    else:
+        return data.Lambda(env, args[0], args[1:])
+
 @specialform('delay')
 def delay(env, arg):
     return data.Promise(arg, env)
@@ -87,13 +101,6 @@ def _if(env, condition, true_case, false_case):
     else:
         return false_case.eval(env)
 
-@specialform('lambda')
-def _lambda(env, params, *body):
-    if len(body) == 0:
-        raise Exception("lambda: bad syntax")
-    params = [str(param) for param in params]
-    return data.Lambda(params, body, env)
-
 @specialform('let')
 def let(env, var_val_pairs, body):
     vars_and_vals = zip(var_val_pairs.items)
@@ -101,13 +108,6 @@ def let(env, var_val_pairs, body):
     vals = [val.eval(env) for val in vars_and_vals[1]]
     new_lambda = Lambda(let_vars, body, env)
     new_lambda._apply_evaluated(vals)
-
-@specialform('or')
-def _or(env, *args):
-    for arg in args:
-        if arg.eval(env):
-            return data.Bool("#t")
-    return data.Bool("#f")
 
 @specialform('quote')
 def quote(env, arg):

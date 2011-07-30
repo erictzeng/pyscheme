@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import util
 import env
-        
+import exception
         
 class SchemeDatum(object):
     def eval(self, env):
@@ -80,20 +80,36 @@ class Primitive(Procedure):
 
 
 class Lambda(Procedure):
-    def __init__(self, params, body, env):
-        self.params = params
-        self.body = body
+    def __init__(self, env, params, body):
         self.env = env
+        self.body = body
+        self.params = []
+        self.rest_params = False
+
+        while params.isPair():
+            self.params.append(params.car)
+            params = params.cdr
+        if not params == Nil():
+            self.params.append(params)
+            self.rest_params = True
 
     def _apply_evaluated(self, args):
-        if len(args) != len(self.params):
-            raise TypeError # TODO: fix
         new_env = env.Env(self.env)
-        new_env.update(zip(self.params, args))
+        if not self.rest_params:
+            if len(args) != len(self.params):
+                raise exception.ArgumentCountError('lambda', len(self.params), len(args))
+            else:
+                new_env.update(zip(map(str, self.params), args))
+        else:
+            if len(args) < len(self.params) - 1:
+                raise exception.ArgumentCountError('lambda', '{0} or more'.format(len(self.params) - 1), len(args))
+            else:
+                new_env.update(zip(map(str, self.params[:-1]), args[:len(self.params)-1]))
+                new_env.update([(str(self.params[-1]), reduce(lambda accum, next: ConsPair(next, accum), args[len(self.params)-1:], Nil()))])
         for expr in self.body[:-1]:
             expr.eval(new_env)
         return self.body[-1].eval(new_env)
-
+                
 
 class ConsPair(SchemeDatum):
     def __init__(self, car, cdr):
@@ -225,7 +241,6 @@ class Identifier(SchemeDatum):
 
     def isIdentifier(self):
         return True
-
 
 class Boolean(SchemeDatum):
     def __init__(self, value):
