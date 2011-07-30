@@ -218,7 +218,7 @@ class IntLiteral(SchemeDatum):
         return str(self.val)
 
     def __eq__(self, num):
-        return self.val == num.val
+        return isinstance(num, IntLiteral) and self.val == num.val
 
     def __repr__(self):
         return "[IntLiteral {0}]".format(self.val)
