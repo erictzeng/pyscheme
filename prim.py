@@ -101,8 +101,9 @@ def quote(env, arg):
 def set_bang(env, var, val):
     env.__setitem__(str(var), val.eval(env))
 
-
-# Primitive functions
+#########################
+#  Primitive functions  #
+#########################
 
 @primitive('exit')
 def scheme_exit(*args):
@@ -190,32 +191,76 @@ def append_bang(*args):
             current = current.cdr
 
 @primitive('append')
-def scheme_append(list1, list2):
-    new_list = copy.deepcopy(list1)
-    append_bang(new_list, list2)
-    return new_list
+def scheme_append(*args):
+    for element in args[:-1]:
+        if not element.isList():
+            raise exception.WrongArgumentType('append', 'list', element)
+    if len(args) == 0:
+        return data.Nil()
+    elif len(args) == 1:
+        return args[0]
+    else:
+        front = current = args[0].copy()
+        for element in args[1:]:
+            element = element.copy()
+            while not current.cdr == data.Nil():
+                current = current.cdr
+            if not element.isList():
+                current.cdr = data.ConsPair(element, data.Nil())
+            else:
+                current.cdr = element
+            current = current.cdr
+        return front
 
 @primitive('cons')
-def cons(car, cdr):
-    return data.ConsPair(car, cdr)
+def cons(*args):
+    if len(args) != 2:
+        raise exception.ArgumentCountError('cons', 'exactly two', len(args))        
+    return data.ConsPair(args[0], args[1])
 
 @primitive('car')
-def car(pair): return pair.car
+def car(*args):
+    if len(args) != 1:
+        raise exception.ArgumentCountError('car', 'exactly one', len(args))
+    return args[0].car
 
 @primitive('cdr')
-def cdr(pair): return pair.cdr
+def cdr(*args):
+    if len(args) != 1:
+        raise exception.ArgumentCountError('cdr', 'exactly one', len(args))
+    return args[0].cdr
 
 @primitive('caar')
-def caar(pair): return pair.car.car
+def caar(*args):
+    if len(args) != 1:
+        raise exception.ArgumentCountError('caar', 'exactly one', len(args))
+    if not args[0].isPair() or not args[0].car.isPair():
+        raise exception.WrongArgumentType('caar', 'list', args[0])
+    return args[0].car.car
 
 @primitive('cadr')
-def caar(pair): return pair.cdr.car
+def caar(pair):
+    if len(args) != 1:
+        raise exception.ArgumentCountError('cadr', 'exactly one', len(args))
+    if not args[0].isPair() or not args[0].cdr.isPair():
+        raise exception.WrongArgumentType('cadr', 'list', args[0])
+    return pair.cdr.car
 
 @primitive('cdar')
-def caar(pair): return pair.car.cdr
+def caar(pair):
+    if len(args) != 1:
+        raise exception.ArgumentCountError('cdar', 'exactly one', len(args))
+    if not args[0].isPair() or not args[0].car.isPair():
+        raise exception.WrongArgumentType('cdar', 'list', args[0])
+    return pair.car.cdr
 
 @primitive('cddr')
-def caar(pair): return pair.cdr.cdr
+def caar(pair):
+    if len(args) != 1:
+        raise exception.ArgumentCountError('cddr', 'exactly one', len(args))
+    if not args[0].isPair() or not args[0].cdr.isPair():
+        raise exception.WrongArgumentType('cddr', 'list', args[0])
+    return pair.cdr.cdr
 
 @primitive('vector-ref')
 def vector_ref(vec, index):

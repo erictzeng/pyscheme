@@ -37,6 +37,9 @@ class SchemeDatum(object):
     def isNumber(self):
         return False
 
+    def copy(self):
+        return self
+
 class Callable(SchemeDatum):
     def apply(self, env, args):
         raise NotImplementedError
@@ -126,6 +129,9 @@ class ConsPair(SchemeDatum):
 
     def isList(self):
         return self.cdr.isList()
+
+    def copy(self):
+        return ConsPair(self.car.copy(), self.cdr.copy())
 
 @util.singleton
 class Nil(SchemeDatum):
