@@ -40,6 +40,9 @@ class SchemeDatum(object):
     def copy(self):
         return self
 
+    def isVector(self):
+        return False
+
 class Callable(SchemeDatum):
     def apply(self, env, args):
         raise NotImplementedError
@@ -148,43 +151,28 @@ class Nil(SchemeDatum):
         return True
 
 class Vector(SchemeDatum):
-    def __init__(self):
-        pass
+    def __init__(self, *args):
+        self.values = list(args)
+        self.length = len(args)
 
-    def init_with_length(self, length):
-        self.values = [None]*length
-        self.LENGTH = length
-
-    def init_with_vals(self, *args):
-        self.values = [arg for arg in args]
-        self.LENGTH = len(args)
-
-    def init_with_initial_val(self, length, init_val):
-        self.values = [init_val]*length
-        self.LENGTH = length
-
-    def vector_ref(self, index):
-        if (index < 0) or (index >= self.LENGTH):
-            raise IndexError("index out of bounds")
-        else:
-            return self.values[index]
+    def get(self, index):
+        if index >= self.length:
+            raise IndexOutOfBoundsError(self, index, self.length)
     
-    def vector_set_bang(self, index, new_val):
-        if (index < 0) or (index >= self.LENGTH):
-            raise IndexError("index out of bounds")
+    def set(self, index, value):
+        if index >= self.length:
+            raise IndexOutOfBoundsError(self, index, self.length)
         else:
-            self.values[index] = new_val
+            self.values[index] = value
 
     def __str__(self):
         display = ""
         for value in self.values:
-            if value is None:
-                display += "#[unbound] "
-            else:
-                display += str(value) + " "
-        return "#({0})".format(display)
+            display += str(value) + " " if value else "#[unbound] "
+        return "#({0})".format(display.rstrip(" "))
 
-     #   return "#({0})".format(" ".join(str(item) for item in self.values))
+    def isVector(self):
+        return True
         
 
 class IntLiteral(SchemeDatum):

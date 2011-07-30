@@ -101,9 +101,9 @@ def quote(env, arg):
 def set_bang(env, var, val):
     env.__setitem__(str(var), val.eval(env))
 
-#########################
-#  Primitive functions  #
-#########################
+###########################
+#  Arithmetic  functions  #
+###########################
 
 @primitive('exit')
 def scheme_exit(*args):
@@ -148,47 +148,15 @@ def equal(*args):
         raise exception.ArgumentCountError('=', 'one or more', '0')
     return data.Boolean("#t") if args.count(args[0]) == len(args) else data.Boolean("#f")
 
-@primitive('set-car!')
-def set_car_bang(*args):
-    if not len(args) == 2:
-        raise exception.ArgumentCountError('set-car!', 'exactly two', len(args))
-    cons_pair, new_car = args[0], args[1]
-    if not cons_pair.isPair():
-        raise exception.WrongArgumentType('set-car!', 'pair', cons_pair)
-    cons_pair.car = new_car
 
-@primitive('set-cdr!')
-def set_cdr_bang(*args):
-    if not len(args) == 2:
-        raise exception.ArgumentCountError('set-cdr!', 'exactly two', len(args))
-    cons_pair, new_cdr = args[0], args[1]
-    if not cons_pair.isPair():
-        raise exception.WrongArgumentType('set-cdr!', 'pair', cons_pair)
-    cons_pair.cdr = new_cdr
+#########################
+#  List/Pair Functions  #
+#########################
+
 
 @primitive('list')
 def scheme_list(*args):
     return reduce(lambda accum, next: cons(next, accum), args[::-1], data.Nil())
-
-@primitive('append!')
-def append_bang(*args):
-    for element in args[:-1]:
-        if not element.isList():
-            raise exception.WrongArgumentType('append!', 'list', element)
-    if len(args) == 0:
-        return data.Nil()
-    elif len(args) == 1:
-        return args[0]
-    else:
-        front = current = args[0]
-        for element in args[1:]:
-            while not current.cdr == data.Nil():
-                current = current.cdr
-            if not element.isList():
-                current.cdr = data.ConsPair(element, data.Nil())
-            else:
-                current.cdr = element
-            current = current.cdr
 
 @primitive('append')
 def scheme_append(*args):
@@ -211,6 +179,26 @@ def scheme_append(*args):
                 current.cdr = element
             current = current.cdr
         return front
+
+@primitive('append!')
+def append_bang(*args):
+    for element in args[:-1]:
+        if not element.isList():
+            raise exception.WrongArgumentType('append!', 'list', element)
+    if len(args) == 0:
+        return data.Nil()
+    elif len(args) == 1:
+        return args[0]
+    else:
+        front = current = args[0]
+        for element in args[1:]:
+            while not current.cdr == data.Nil():
+                current = current.cdr
+            if not element.isList():
+                current.cdr = data.ConsPair(element, data.Nil())
+            else:
+                current.cdr = element
+            current = current.cdr
 
 @primitive('cons')
 def cons(*args):
@@ -262,31 +250,76 @@ def caar(pair):
         raise exception.WrongArgumentType('cddr', 'list', args[0])
     return pair.cdr.cdr
 
-@primitive('vector-ref')
-def vector_ref(vec, index):
-    return vec.vector_ref(index.val)
+@primitive('set-car!')
+def set_car_bang(*args):
+    if not len(args) == 2:
+        raise exception.ArgumentCountError('set-car!', 'exactly two', len(args))
+    cons_pair, new_car = args[0], args[1]
+    if not cons_pair.isPair():
+        raise exception.WrongArgumentType('set-car!', 'pair', cons_pair)
+    cons_pair.car = new_car
 
-@primitive('vector-set!')
-def vector_set_bang(vec, index, new_val):
-    vec.vector_set_bang(index.val, new_val.val)
+@primitive('set-cdr!')
+def set_cdr_bang(*args):
+    if not len(args) == 2:
+        raise exception.ArgumentCountError('set-cdr!', 'exactly two', len(args))
+    cons_pair, new_cdr = args[0], args[1]
+    if not cons_pair.isPair():
+        raise exception.WrongArgumentType('set-cdr!', 'pair', cons_pair)
+    cons_pair.cdr = new_cdr
+
+######################
+#  Vector Functions  #
+######################
 
 @primitive('vector')
 def vector(*args):
-    vec = data.Vector()
-    vec.init_with_vals(*args)
-    return vec
+    return data.Vector(*args)
 
 @primitive('make-vector')
 def make_vector(*args):
-    vec = data.Vector()
-    if len(args) == 1:  # i.e. (make-vector 3)
-        vec.init_with_length(args[0].val)
-        return vec
-    elif len(args) == 2:  # i.e. (make-vector 3 'hi)
-        vec.init_with_initial_val(args[0].val, args[1].val)
-        return vec
+    if len(args) == 1:
+        if not args[0].isNumber():
+            raise exception.WrongArgumentType('make-vector', 'numerical type', args[0])
+        else:
+            arglist = [None] * args[0].val
+            return data.Vector(*arglist)
+    elif len(args) == 2:
+        if not args[0].isNumber():
+            raise exception.WrongArgumentType('make-vector', 'numerical type', args[0])
+        else:
+            arglist = [args[1]] * args[0].val
+            return data.Vector(*arglist)
     else:
-        raise Exception("incorrect number of arguments")
+        raise exception.ArgumentCountError('make-vector', 'one or two', len(args))
+
+@primitive('vector-ref')
+def vector_ref(*args):
+    if len(args) != 2:
+        raise exception.ArgumentCountError('vector-ref', 'exactly two', len(args))
+    elif not args[0].isVector():
+        raise exception.WrongArgumentType('vector-ref', 'vector', args[0])
+    elif not args[1].isNumber():
+        raise exception.WrongArgumentType('vector-ref', 'numerical type', args[1])
+    else:
+        return args[0].values.get(args[1].val)
+
+@primitive('vector-set!')
+def vector_set_bang(*args):
+    if len(args) != 3:
+        raise exception.ArgumentCountError('vector-set!', 'exactly three', len(args))
+    else:
+        vector, index, value = args
+    if not vector.isVector():
+        raise exception.WrongArgumentType('vector-set!', 'vector', vector)
+    elif not index.isNumber():
+        raise exception.WrongArgumentType('vector-set!', 'numerical type', index)
+    else:
+        vector.set(index.val, value)
+
+#############
+#  Streams  #
+#############
 
 @primitive('force')
 def force(prom):

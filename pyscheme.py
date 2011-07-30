@@ -109,7 +109,7 @@ def repl(prompt = "pyscheme > "):
                     continue
             val = make_list(input_string)
             for element in val:
-                print val.car.eval(glob)
+                print val.car.eval(glob) or "okay"
         except Exception as e:
             print "***Error:"
             print "   {0}".format(e.msg)

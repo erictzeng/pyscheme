@@ -19,3 +19,8 @@ class ArgumentCountError(IllegalArgumentError):
 class WrongArgumentType(IllegalArgumentError):
     def __init__(self, function, expected, given):
         self.msg = "Wrong type of argument for {0}: Expected {1} ({2} given)".format(function, expected, given)
+
+# Index out of bounds
+class IndexOutOfBounds(SchemeError):
+    def __init__(self, vector, index, length):
+        self.msg = "Index out of bounds: Tried to access index {1} of {0} (with length {2})".format(vector, index, length)
