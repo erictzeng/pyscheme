@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import util
+import exception
 
 class Env(dict):
     
@@ -29,7 +30,7 @@ class Env(dict):
                 return env
             else:
                 env = env.next
-        raise Exception("Unbound variable: {0}".format(key))
+        raise exception.UnboundVariableError(key)
 
     def __getitem__(self, key):
         env = self._find_env(key)

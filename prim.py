@@ -35,7 +35,9 @@ def make_global_dec(cls):
 primitive = make_global_dec(data.Primitive)
 specialform = make_global_dec(data.SpecialForm)
 
-# Global variables
+######################
+#  Global variables  #
+######################
 
 glob = env.GlobalEnv()
 
@@ -43,8 +45,9 @@ glob.new_var('nil', data.Nil())
 glob.new_var('true', data.Boolean("#t"))
 glob.new_var('false', data.Boolean("#f"))
 
-
-# Special forms
+###################
+#  Special forms  #
+###################
 
 @specialform('and')
 def _and(env, *args):
@@ -54,8 +57,21 @@ def _and(env, *args):
     return args[-1]
 
 @specialform('define')
-def define(env, var, body):
-    env.new_var(str(var), body.eval(env))
+def define(env, *args):
+    if not len(args) == 2:
+        raise exception.ArgumentCountError('define', 'exactly two', len(args))
+    else:
+        var, body = args
+    if var.isIdentifier():
+        env.new_var(str(var), body.eval(env))
+    elif var.isList():
+        if var == data.Nil() or not var.car.isIdentifier():
+            raise exception.WrongArgumentTypeError('define', 'variable or function', var)
+        else:
+            env.new_var(str(var.car), _lambda(env, var.cdr, body))
+            var = var.car
+    else:
+        raise exception.WrongArgumentTypeError('define', 'variable or function', var)
     return var
 
 @specialform('delay')
@@ -113,7 +129,7 @@ def scheme_exit(*args):
 def plus(*args):
     for arg in args:
         if not arg.isNumber():
-            raise exception.WrongArgumentType('+', 'numerical type', arg)
+            raise exception.WrongArgumentTypeError('+', 'numerical type', arg)
     return sum(args, data.IntLiteral(0))
 
 @primitive('-')
@@ -122,14 +138,14 @@ def minus(*args):
         raise exception.ArgumentCountError('-', 'one or more', '0')
     for arg in args:
         if not arg.isNumber():
-            raise exception.WrongArgumentType('-', 'numerical type', arg)
+            raise exception.WrongArgumentTypeError('-', 'numerical type', arg)
     return args[0] - sum(args[1:], data.IntLiteral(0)) if len(args) > 1 else -args[0]
 
 @primitive('*')
 def multiply(*args):
     for arg in args:
         if not arg.isNumber():
-            raise exception.WrongArgumentType('*', 'numerical type', arg)
+            raise exception.WrongArgumentTypeError('*', 'numerical type', arg)
     return reduce(operator.mul, args)
 
 @primitive('/')
@@ -138,7 +154,7 @@ def divide(*args):
         raise exception.ArgumentCountError('/', 'one or more', '0')
     for arg in args:
         if not arg.isNumber():
-            raise exception.WrongArgumentType('/', 'numerical type', arg)
+            raise exception.WrongArgumentTypeError('/', 'numerical type', arg)
     return args[0] / reduce(operator.mul, args[1:]) \
         if len(args) > 1 else data.IntLiteral(1)/args[0]
 
@@ -162,7 +178,7 @@ def scheme_list(*args):
 def scheme_append(*args):
     for element in args[:-1]:
         if not element.isList():
-            raise exception.WrongArgumentType('append', 'list', element)
+            raise exception.WrongArgumentTypeError('append', 'list', element)
     if len(args) == 0:
         return data.Nil()
     elif len(args) == 1:
@@ -184,7 +200,7 @@ def scheme_append(*args):
 def append_bang(*args):
     for element in args[:-1]:
         if not element.isList():
-            raise exception.WrongArgumentType('append!', 'list', element)
+            raise exception.WrongArgumentTypeError('append!', 'list', element)
     if len(args) == 0:
         return data.Nil()
     elif len(args) == 1:
@@ -223,7 +239,7 @@ def caar(*args):
     if len(args) != 1:
         raise exception.ArgumentCountError('caar', 'exactly one', len(args))
     if not args[0].isPair() or not args[0].car.isPair():
-        raise exception.WrongArgumentType('caar', 'list', args[0])
+        raise exception.WrongArgumentTypeError('caar', 'list', args[0])
     return args[0].car.car
 
 @primitive('cadr')
@@ -231,7 +247,7 @@ def caar(pair):
     if len(args) != 1:
         raise exception.ArgumentCountError('cadr', 'exactly one', len(args))
     if not args[0].isPair() or not args[0].cdr.isPair():
-        raise exception.WrongArgumentType('cadr', 'list', args[0])
+        raise exception.WrongArgumentTypeError('cadr', 'list', args[0])
     return pair.cdr.car
 
 @primitive('cdar')
@@ -239,7 +255,7 @@ def caar(pair):
     if len(args) != 1:
         raise exception.ArgumentCountError('cdar', 'exactly one', len(args))
     if not args[0].isPair() or not args[0].car.isPair():
-        raise exception.WrongArgumentType('cdar', 'list', args[0])
+        raise exception.WrongArgumentTypeError('cdar', 'list', args[0])
     return pair.car.cdr
 
 @primitive('cddr')
@@ -247,7 +263,7 @@ def caar(pair):
     if len(args) != 1:
         raise exception.ArgumentCountError('cddr', 'exactly one', len(args))
     if not args[0].isPair() or not args[0].cdr.isPair():
-        raise exception.WrongArgumentType('cddr', 'list', args[0])
+        raise exception.WrongArgumentTypeError('cddr', 'list', args[0])
     return pair.cdr.cdr
 
 @primitive('set-car!')
@@ -256,7 +272,7 @@ def set_car_bang(*args):
         raise exception.ArgumentCountError('set-car!', 'exactly two', len(args))
     cons_pair, new_car = args[0], args[1]
     if not cons_pair.isPair():
-        raise exception.WrongArgumentType('set-car!', 'pair', cons_pair)
+        raise exception.WrongArgumentTypeError('set-car!', 'pair', cons_pair)
     cons_pair.car = new_car
 
 @primitive('set-cdr!')
@@ -265,7 +281,7 @@ def set_cdr_bang(*args):
         raise exception.ArgumentCountError('set-cdr!', 'exactly two', len(args))
     cons_pair, new_cdr = args[0], args[1]
     if not cons_pair.isPair():
-        raise exception.WrongArgumentType('set-cdr!', 'pair', cons_pair)
+        raise exception.WrongArgumentTypeError('set-cdr!', 'pair', cons_pair)
     cons_pair.cdr = new_cdr
 
 ######################
@@ -280,13 +296,13 @@ def vector(*args):
 def make_vector(*args):
     if len(args) == 1:
         if not args[0].isNumber():
-            raise exception.WrongArgumentType('make-vector', 'numerical type', args[0])
+            raise exception.WrongArgumentTypeError('make-vector', 'numerical type', args[0])
         else:
             arglist = [None] * args[0].val
             return data.Vector(*arglist)
     elif len(args) == 2:
         if not args[0].isNumber():
-            raise exception.WrongArgumentType('make-vector', 'numerical type', args[0])
+            raise exception.WrongArgumentTypeError('make-vector', 'numerical type', args[0])
         else:
             arglist = [args[1]] * args[0].val
             return data.Vector(*arglist)
@@ -298,9 +314,9 @@ def vector_ref(*args):
     if len(args) != 2:
         raise exception.ArgumentCountError('vector-ref', 'exactly two', len(args))
     elif not args[0].isVector():
-        raise exception.WrongArgumentType('vector-ref', 'vector', args[0])
+        raise exception.WrongArgumentTypeError('vector-ref', 'vector', args[0])
     elif not args[1].isNumber():
-        raise exception.WrongArgumentType('vector-ref', 'numerical type', args[1])
+        raise exception.WrongArgumentTypeError('vector-ref', 'numerical type', args[1])
     else:
         return args[0].values.get(args[1].val)
 
@@ -311,9 +327,9 @@ def vector_set_bang(*args):
     else:
         vector, index, value = args
     if not vector.isVector():
-        raise exception.WrongArgumentType('vector-set!', 'vector', vector)
+        raise exception.WrongArgumentTypeError('vector-set!', 'vector', vector)
     elif not index.isNumber():
-        raise exception.WrongArgumentType('vector-set!', 'numerical type', index)
+        raise exception.WrongArgumentTypeError('vector-set!', 'numerical type', index)
     else:
         vector.set(index.val, value)
 

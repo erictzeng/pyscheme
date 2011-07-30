@@ -17,8 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import util
 import env
-
-
         
         
 class SchemeDatum(object):
@@ -41,6 +39,9 @@ class SchemeDatum(object):
         return self
 
     def isVector(self):
+        return False
+
+    def isIdentifier(self):
         return False
 
 class Callable(SchemeDatum):
@@ -221,6 +222,9 @@ class Identifier(SchemeDatum):
     
     def __repr__(self):
         return "[Identifier {0}]".format(self.name)
+
+    def isIdentifier(self):
+        return True
 
 
 class Boolean(SchemeDatum):
