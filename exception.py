@@ -24,3 +24,8 @@ class WrongArgumentTypeError(IllegalArgumentError):
 class IndexOutOfBoundsError(SchemeError):
     def __init__(self, vector, index, length):
         self.msg = "Index out of bounds: Tried to access index {1} of {0} (with length {2})".format(vector, index, length)
+
+# Mismatched Parens
+class MismatchedParensError(SchemeError):
+    def __init__(self, expression):
+        self.msg = "Mismatched parenthesis: {0}".format(expression)

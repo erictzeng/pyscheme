@@ -15,12 +15,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import operator
+import ConfigParser
 
 import env
 import data
 import util
 import exception
 import copy
+
+
 
 def make_global_dec(cls):
     def decorator(name):
@@ -44,6 +47,15 @@ glob = env.GlobalEnv()
 glob.new_var('nil', data.Nil())
 glob.new_var('true', data.Boolean("#t"))
 glob.new_var('false', data.Boolean("#f"))
+
+config = ConfigParser.ConfigParser()
+config.read("config")
+for name, value in config.items("Variables"):
+    if value.lower() in ["#t", "true", "yes"]:
+        glob.new_var(name, data.Boolean("#t"))
+    elif value.lower() in ["#f", "false", "no"]:
+        glob.new_var(name, data.Boolean("#f"))
+
 
 ###################
 #  Special forms  #

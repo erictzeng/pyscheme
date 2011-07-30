@@ -15,6 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import locale
+locale.setlocale(locale.LC_ALL, "")
+
 import util
 import env
 import exception
@@ -170,6 +173,9 @@ class Nil(SchemeDatum):
 
     def isList(self):
         return True
+    
+    def eval(self, env):
+        return self
 
 class Vector(SchemeDatum):
     def __init__(self, *args):
@@ -219,7 +225,10 @@ class IntLiteral(SchemeDatum):
         return IntLiteral(-self.val)
 
     def __str__(self):
-        return str(self.val)
+        if env.GlobalEnv()['pretty-print']:
+            return locale.format('%d', self.val, True)
+        else:
+            return str(self.val)
 
     def __eq__(self, num):
         return isinstance(num, IntLiteral) and self.val == num.val

@@ -19,6 +19,8 @@ import data
 import env
 import prim
 import re
+import sys
+import exception
 
 def make_list(input):
     # Input: string
@@ -102,18 +104,22 @@ def repl(prompt = "pyscheme > "):
         try:
             while(not check == 0):
                 if check == -1:
-                    raise Exception("Mismatched parens: {0}".format(input_string))
+                    raise exception.MismatchedParensError(input_string)
                 elif check > 0:
                     input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
                     check = _check_input_parens(input_string)
                     continue
             val = make_list(input_string)
             for element in val:
-                print val.car.eval(glob) or "okay"
+                print "okay" if element == None else element.eval(glob)
         except Exception as e:
-            print "***Error:"
-            print "   {0}".format(e.msg)
-            continue
+            if debug:
+                print "Debug: {0}".format(e.args)
+                continue
+            else:
+                print "***Error:"
+                print "   {0}".format(e.msg)
+                continue
 
 def _check_input_parens(input_string):
     # Returns
@@ -130,4 +136,8 @@ def _check_input_parens(input_string):
     return parencount
 
 if __name__ == "__main__":
+    if len(sys.argv) >= 2 and sys.argv[1] == "debug":
+        debug = True
+    else:
+        debug = False
     repl()
