@@ -83,6 +83,7 @@ class Lambda(Procedure):
     def __init__(self, env, params, body):
         self.env = env
         self.body = body
+        self.raw_params = params
         self.params = []
         self.rest_params = False
 
@@ -109,6 +110,9 @@ class Lambda(Procedure):
         for expr in self.body[:-1]:
             expr.eval(new_env)
         return self.body[-1].eval(new_env)
+
+    def __repr__(self):
+        return "[Lambda {0}]".format(self.raw_params)
                 
 
 class ConsPair(SchemeDatum):
