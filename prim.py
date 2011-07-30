@@ -93,13 +93,17 @@ def delay(env, arg):
     return data.Promise(arg, env)
 
 @specialform('if')
-def _if(env, condition, true_case, false_case):
-    if condition.eval(env):
-        return true_case.eval(env)
-#    elif false_case == None:
-#        return None
+def _if(env, *args):
+    if len(args) == 2:
+        if args[0].eval(env):
+            return args[1].eval(env)
+    elif len(args) == 3:
+        if args[0].eval(env):
+            return args[1].eval(env)
+        else:
+            return args[2].eval(env)
     else:
-        return false_case.eval(env)
+        raise ArgumentCountError('if', 'two or three', len(args))
 
 @specialform('let')
 def let(env, var_val_pairs, body):
