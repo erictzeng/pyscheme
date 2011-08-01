@@ -21,6 +21,7 @@ import prim
 import re
 import sys
 import exception
+import readline
 
 def make_list(input):
     # Input: string
