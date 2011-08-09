@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import operator
 import ConfigParser
 
+import sys
 import env
 import data
 import util
@@ -167,7 +168,7 @@ def cons_stream(env, *args):
 @specialform('display')
 def display(env, *args):
     if len(args) == 1:
-        print args[0]
+        sys.stdout.write(str(args[0]))
     else:
         raise ArgumentCountError('display', 'exactly one', len(args))
 ###########################

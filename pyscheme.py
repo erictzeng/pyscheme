@@ -115,9 +115,8 @@ def repl(prompt = "pyscheme > "):
                     input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
                     check = _check_input_parens(input_string)
                     continue
-            val = make_list(input_string)
-            for element in val:
-                print "okay" if element == None else element.eval(glob)
+            for element in make_list(input_string):
+                print element.eval(glob) or "okay"
         except Exception as e:
             if debug:
                 traceback.print_exc(file=sys.stdout)
