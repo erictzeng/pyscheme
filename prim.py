@@ -81,10 +81,11 @@ def define(env, *args):
         var, body = args
         if var.isIdentifier():
             env.new_var(str(var), body.eval(env))
+            return var
         elif var.isList():
             if not var == data.Nil() and var.car.isIdentifier():
                 env.new_var(str(var.car), _lambda(env, var.cdr, body))
-                var = var.car
+                return var.car
             else:
                 raise exception.WrongArgumentTypeError('define', 'variable or function', var)
         else:
@@ -155,6 +156,20 @@ def set_bang(env, *args):
     else:
         raise ArgumentCountError('set!', 'exactly two', len(args))
 
+@specialform('cons-stream')
+def cons_stream(env, *args):
+    if len(args) == 2:
+        car, cdr = args
+        return data.ConsPair(car, data.Promise(cdr, env))
+    else:
+        raise ArgumentCountError('cons-stream', 'exactly two', len(args))
+
+@specialform('display')
+def display(env, *args):
+    if len(args) == 1:
+        print args[0]
+    else:
+        raise ArgumentCountError('display', 'exactly one', len(args))
 ###########################
 #  Arithmetic  functions  #
 ###########################
@@ -272,7 +287,7 @@ def car(*args):
 
 @primitive('cdr')
 def cdr(*args):
-    if len(Args) == 1:
+    if len(args) == 1:
         return args[0].cdr
     else:
         raise exception.ArgumentCountError('cdr', 'exactly one', len(args))
@@ -288,48 +303,56 @@ def caar(*args):
         raise exception.ArgumentCountError('caar', 'exactly one', len(args))
 
 @primitive('cadr')
-def caar(pair):
+def caar(*args):
     if len(args) == 1:
         if args[0].isPair() and args[0].cdr.isPair():
-            return pair.cdr.car
+            return args[0].cdr.car
         else:
             raise exception.WrongArgumentTypeError('cadr', 'list', args[0])
     else:
         raise exception.ArgumentCountError('cadr', 'exactly one', len(args))
-### TODO ###
+
 @primitive('cdar')
-def caar(pair):
-    if len(args) != 1:
+def caar(*args):
+    if len(args) == 1:
+        if args[0].isPair() and args[0].car.isPair():
+            return args[0].car.cdr
+        else:
+            raise exception.WrongArgumentTypeError('cdar', 'list', args[0])
+    else:
         raise exception.ArgumentCountError('cdar', 'exactly one', len(args))
-    if not args[0].isPair() or not args[0].car.isPair():
-        raise exception.WrongArgumentTypeError('cdar', 'list', args[0])
-    return pair.car.cdr
 
 @primitive('cddr')
-def caar(pair):
-    if len(args) != 1:
+def caar(*args):
+    if len(args) == 1:
+        if args[0].isPair() and args[0].cdr.isPair():
+            return args[0].cdr.cdr
+        else:
+            raise exception.WrongArgumentTypeError('cddr', 'list', args[0])
+    else:
         raise exception.ArgumentCountError('cddr', 'exactly one', len(args))
-    if not args[0].isPair() or not args[0].cdr.isPair():
-        raise exception.WrongArgumentTypeError('cddr', 'list', args[0])
-    return pair.cdr.cdr
 
 @primitive('set-car!')
 def set_car_bang(*args):
-    if not len(args) == 2:
+    if len(args) == 2:
+        cons_pair, new_car = args[0], args[1]
+        if cons_pair.isPair():
+            cons_pair.car = new_car
+        else:
+            raise exception.WrongArgumentTypeError('set-car!', 'pair', cons_pair)
+    else:
         raise exception.ArgumentCountError('set-car!', 'exactly two', len(args))
-    cons_pair, new_car = args[0], args[1]
-    if not cons_pair.isPair():
-        raise exception.WrongArgumentTypeError('set-car!', 'pair', cons_pair)
-    cons_pair.car = new_car
 
 @primitive('set-cdr!')
 def set_cdr_bang(*args):
-    if not len(args) == 2:
+    if len(args) == 2:
+        cons_pair, new_cdr = args[0], args[1]
+        if cons_pair.isPair():
+            cons_pair.cdr = new_cdr
+        else:
+            raise exception.WrongArgumentTypeError('set-cdr!', 'pair', cons_pair)
+    else:
         raise exception.ArgumentCountError('set-cdr!', 'exactly two', len(args))
-    cons_pair, new_cdr = args[0], args[1]
-    if not cons_pair.isPair():
-        raise exception.WrongArgumentTypeError('set-cdr!', 'pair', cons_pair)
-    cons_pair.cdr = new_cdr
 
 ######################
 #  Vector Functions  #
@@ -385,22 +408,40 @@ def vector_set_bang(*args):
 #############
 
 @primitive('force')
-def force(prom):
-    if prom.forced:
-        return prom.val
+def force(*args):
+    if len(args) == 1:
+        promise = args[0]
+        if promise.isPromise():
+            if promise.forced:
+                return promise.val
+            else:
+                promise.val = promise.expr.eval(promise.env)
+                promise.forced = True
+                return promise.val
+        else:
+            raise WrongArgumentTypeError('force', 'promise', promise)
     else:
-        prom.val = prom.expr.eval(prom.env)
-        prom.forced = True
-        return prom.val
-
-@primitive('cons-stream')
-def cons_stream(car, cdr):
-    return ConsPair(car, data.Promise(cdr, env))
+        raise ArgumentCountError('force', 'exactly one', len(args))
 
 @primitive('stream-car')
-def stream_car(stream):
-    return stream.car
+def stream_car(*args):
+    if len(args) == 1:
+        if args[0].isPair():
+            return args[0].car
+        else:
+            raise WrongArgumentTypeError('stream-car', 'pair', args[0])
+    else:
+        raise ArgumentCountError('stream-car', 'exactly one', len(args))
 
 @primitive('stream-cdr')
-def stream_cdr(stream):
-    return force(stream.cdr)
+def stream_cdr(*args):
+    if len(args) == 1:
+        if args[0].isPair():
+            if args[0].cdr.isPromise():
+                return force(args[0].cdr)
+            else:
+                raise WrongArgumentTypeError('stream-cdr', 'promise', args[0].cdr)
+        else:
+            raise WrongArgumentTypeError('stream-cdr', 'pair', args[0])
+    else:
+        raise ArgumentCountError('stream-cdr', 'exactly one', len(args))

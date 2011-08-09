@@ -103,10 +103,6 @@ def tokenize_list(input_string):
 ##########
 #  REPL  #
 ##########
-if __name__ == "__main__":
-    debug = len(sys.argv) >= 2 and sys.argv[1] == "debug"
-    repl()
-
 def repl(prompt = "pyscheme > "):
     while True:
         try:
@@ -143,3 +139,7 @@ def _check_input_parens(input_string):
         if parencount < 0:
             return parencount
     return parencount
+
+if __name__ == "__main__":
+    debug = len(sys.argv) >= 2 and sys.argv[1] == "debug"
+    repl()

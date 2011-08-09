@@ -47,6 +47,9 @@ class SchemeDatum(object):
     def isIdentifier(self):
         return False
 
+    def isPromise(self):
+        return False
+
 class Callable(SchemeDatum):
     def apply(self, env, args):
         raise NotImplementedError
@@ -281,3 +284,6 @@ class Promise(SchemeDatum):
         
     def eval(self, env):
         return self
+
+    def isPromise(self):
+        return True
