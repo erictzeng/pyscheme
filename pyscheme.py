@@ -98,29 +98,34 @@ def tokenize_list(input_string):
 # STUFF FOR TESTING, REMOVE LATER
 glob = env.GlobalEnv()
 
-def repl(prompt = "pyscheme > "):
+def initialize():
     while True:
-        input_string = raw_input(prompt)
-        check = _check_input_parens(input_string)
-        try:
-            while(not check == 0):
-                if check == -1:
-                    raise exception.MismatchedParensError(input_string)
-                elif check > 0:
-                    input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
-                    check = _check_input_parens(input_string)
-                    continue
-            val = make_list(input_string)
-            for element in val:
-                print "okay" if element == None else element.eval(glob)
-        except Exception as e:
-            if debug:
-                print "Debug: {0}".format(e.args)
-                continue
-            else:
+        if debug:
+            repl()
+        else:
+            try:
+                repl()
+            except Exception as e:
                 print "***Error:"
                 print "   {0}".format(e.msg)
                 continue
+
+def repl(prompt = "pyscheme > "):
+    input_string = raw_input(prompt)
+    check = _check_input_parens(input_string)
+    while(not check == 0):
+        if check == -1:
+            raise exception.MismatchedParensError(input_string)
+        elif check > 0:
+            input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
+            check = _check_input_parens(input_string)
+            continue
+    val = make_list(input_string)
+    for element in val:
+        print "okay" if element == None else element.eval(glob)
+
+
+
 
 def _check_input_parens(input_string):
     # Returns
@@ -141,4 +146,4 @@ if __name__ == "__main__":
         debug = True
     else:
         debug = False
-    repl()
+    initialize()

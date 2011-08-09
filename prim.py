@@ -77,32 +77,34 @@ def _or(env, *args):
 
 @specialform('define')
 def define(env, *args):
-    if not len(args) == 2:
-        raise exception.ArgumentCountError('define', 'exactly two', len(args))
-    else:
+    if len(args) == 2:
         var, body = args
-    if var.isIdentifier():
-        env.new_var(str(var), body.eval(env))
-    elif var.isList():
-        if var == data.Nil() or not var.car.isIdentifier():
-            raise exception.WrongArgumentTypeError('define', 'variable or function', var)
+        if var.isIdentifier():
+            env.new_var(str(var), body.eval(env))
+        elif var.isList():
+            if not var == data.Nil() and var.car.isIdentifier():
+                env.new_var(str(var.car), _lambda(env, var.cdr, body))
+                var = var.car
+            else:
+                raise exception.WrongArgumentTypeError('define', 'variable or function', var)
         else:
-            env.new_var(str(var.car), _lambda(env, var.cdr, body))
-            var = var.car
+            raise exception.WrongArgumentTypeError('define', 'variable or function', var)
     else:
-        raise exception.WrongArgumentTypeError('define', 'variable or function', var)
-    return var
+        raise exception.ArgumentCountError('define', 'exactly two', len(args))
 
 @specialform('lambda')
 def _lambda(env, *args):
-    if len(args) < 2:
-        raise exception.ArgumentCountError('lambda', 'two or more', len(args))
-    else:
+    if len(args) > 1:
         return data.Lambda(env, args[0], args[1:])
+    else:
+        raise exception.ArgumentCountError('lambda', 'two or more', len(args))
 
 @specialform('delay')
-def delay(env, arg):
-    return data.Promise(arg, env)
+def delay(env, *args):
+    if len(args) == 1:
+        return data.Promise(args[0], env)
+    else:
+        raise ArgumentCountError('delay', 'exactly one', len(args))
 
 @specialform('if')
 def _if(env, *args):
@@ -118,20 +120,40 @@ def _if(env, *args):
         raise ArgumentCountError('if', 'two or three', len(args))
 
 @specialform('let')
-def let(env, var_val_pairs, body):
-    vars_and_vals = zip(var_val_pairs.items)
-    let_vars = [var.name for var in vars_and_vals[0]]
-    vals = [val.eval(env) for val in vars_and_vals[1]]
-    new_lambda = Lambda(let_vars, body, env)
-    new_lambda._apply_evaluated(vals)
+def let(env, *args):
+    if len(args) > 1:
+        bindings, body = args[0], args[1:]
+        variables, values = data.Nil(), []
+        if bindings.isList():
+            for pair in bindings:
+                if pair.isPair():
+                    variables = data.ConsPair(pair.car, variables)
+                    values = [pair.cdr.car] + values
+                else:
+                    raise WrongArgumentTypeError('let', 'pair', pair)
+            return data.Lambda(env, variables, body)._apply_evaluated(map(lambda value: value.eval(env), values))
+        else:
+            raise WrongArgumentTypeError('let', 'list', bindings)
+    else:
+        raise ArgumentCountError('let', 'two or more', len(args))
 
 @specialform('quote')
-def quote(env, arg):
-    return arg
+def quote(env, *args):
+    if len(args) == 1:
+        return args[0]
+    else:
+        raise ArgumentCountError('quote', 'exactly one', len(args))
 
 @specialform('set!')
-def set_bang(env, var, val):
-    env.__setitem__(str(var), val.eval(env))
+def set_bang(env, *args):
+    if len(args) == 2:
+        var, val = args
+        if var.isIdentifier():
+            env.__setitem__(str(var), val.eval(env))
+        else:
+            raise WrongArgumentTypeError('set!', 'variable', var)
+    else:
+        raise ArgumentCountError('set!', 'exactly two', len(args))
 
 ###########################
 #  Arithmetic  functions  #
@@ -150,12 +172,13 @@ def plus(*args):
 
 @primitive('-')
 def minus(*args):
-    if len(args) < 1:
+    if len(args) > 0:
+        for arg in args:
+            if not arg.isNumber():
+                raise exception.WrongArgumentTypeError('-', 'numerical type', arg)
+        return args[0] - sum(args[1:], data.IntLiteral(0)) if len(args) > 1 else -args[0]
+    else:
         raise exception.ArgumentCountError('-', 'one or more', '0')
-    for arg in args:
-        if not arg.isNumber():
-            raise exception.WrongArgumentTypeError('-', 'numerical type', arg)
-    return args[0] - sum(args[1:], data.IntLiteral(0)) if len(args) > 1 else -args[0]
 
 @primitive('*')
 def multiply(*args):
@@ -166,13 +189,14 @@ def multiply(*args):
 
 @primitive('/')
 def divide(*args):
-    if len(args) < 1:
+    if len(args) > 0:
+        for arg in args:
+            if not arg.isNumber():
+                raise exception.WrongArgumentTypeError('/', 'numerical type', arg)
+        return args[0] / reduce(operator.mul, args[1:]) \
+            if len(args) > 1 else data.IntLiteral(1)/args[0]
+    else:
         raise exception.ArgumentCountError('/', 'one or more', '0')
-    for arg in args:
-        if not arg.isNumber():
-            raise exception.WrongArgumentTypeError('/', 'numerical type', arg)
-    return args[0] / reduce(operator.mul, args[1:]) \
-        if len(args) > 1 else data.IntLiteral(1)/args[0]
 
 @primitive('=')
 def equal(*args):
@@ -234,38 +258,45 @@ def append_bang(*args):
 
 @primitive('cons')
 def cons(*args):
-    if len(args) != 2:
+    if len(args) == 2:
+        return data.ConsPair(args[0], args[1])
+    else:
         raise exception.ArgumentCountError('cons', 'exactly two', len(args))        
-    return data.ConsPair(args[0], args[1])
 
 @primitive('car')
 def car(*args):
-    if len(args) != 1:
+    if len(args) == 1:
+        return args[0].car
+    else:
         raise exception.ArgumentCountError('car', 'exactly one', len(args))
-    return args[0].car
 
 @primitive('cdr')
 def cdr(*args):
-    if len(args) != 1:
+    if len(Args) == 1:
+        return args[0].cdr
+    else:
         raise exception.ArgumentCountError('cdr', 'exactly one', len(args))
-    return args[0].cdr
 
 @primitive('caar')
 def caar(*args):
-    if len(args) != 1:
+    if len(args) == 1:
+        if args[0].isPair() and args[0].car.isPair():
+            return args[0].car.car
+        else:
+            raise exception.WrongArgumentTypeError('caar', 'list', args[0])
+    else:
         raise exception.ArgumentCountError('caar', 'exactly one', len(args))
-    if not args[0].isPair() or not args[0].car.isPair():
-        raise exception.WrongArgumentTypeError('caar', 'list', args[0])
-    return args[0].car.car
 
 @primitive('cadr')
 def caar(pair):
-    if len(args) != 1:
+    if len(args) == 1:
+        if args[0].isPair() and args[0].cdr.isPair():
+            return pair.cdr.car
+        else:
+            raise exception.WrongArgumentTypeError('cadr', 'list', args[0])
+    else:
         raise exception.ArgumentCountError('cadr', 'exactly one', len(args))
-    if not args[0].isPair() or not args[0].cdr.isPair():
-        raise exception.WrongArgumentTypeError('cadr', 'list', args[0])
-    return pair.cdr.car
-
+### TODO ###
 @primitive('cdar')
 def caar(pair):
     if len(args) != 1:
