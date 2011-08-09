@@ -22,6 +22,13 @@ import re
 import sys
 import exception
 import readline
+import traceback
+
+glob = env.GlobalEnv()
+
+###################
+#  Lexer, Parser  #
+###################
 
 def make_list(input):
     # Input: string
@@ -42,7 +49,6 @@ def tokenize_list(input_string):
     # Returns a list of tokens, leaving parenthesized expressions as is
     result = []
     while input_string:
-        # SPECIAL CASES
         # Handle the shorthand quote
         quote = re.match(r"'", input_string)
         if quote:
@@ -84,7 +90,7 @@ def tokenize_list(input_string):
             token = input_string[:index]
         # Should not reach this case
         else:
-            return None
+            raise exception.ParseError(input_string)
 
         # Append the correct string to parse later
         if quote:
@@ -94,38 +100,35 @@ def tokenize_list(input_string):
         input_string = input_string[index:]
     return result
 
+##########
+#  REPL  #
+##########
+if __name__ == "__main__":
+    debug = len(sys.argv) >= 2 and sys.argv[1] == "debug"
+    repl()
 
-# STUFF FOR TESTING, REMOVE LATER
-glob = env.GlobalEnv()
-
-def initialize():
+def repl(prompt = "pyscheme > "):
     while True:
-        if debug:
-            repl()
-        else:
-            try:
-                repl()
-            except Exception as e:
+        try:
+            input_string = raw_input(prompt)
+            check = _check_input_parens(input_string)
+            while(not check == 0):
+                if check == -1:
+                    raise exception.MismatchedParensError(input_string)
+                elif check > 0:
+                    input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
+                    check = _check_input_parens(input_string)
+                    continue
+            val = make_list(input_string)
+            for element in val:
+                print "okay" if element == None else element.eval(glob)
+        except Exception as e:
+            if debug:
+                traceback.print_exc(file=sys.stdout)
+            else:
                 print "***Error:"
                 print "   {0}".format(e.msg)
                 continue
-
-def repl(prompt = "pyscheme > "):
-    input_string = raw_input(prompt)
-    check = _check_input_parens(input_string)
-    while(not check == 0):
-        if check == -1:
-            raise exception.MismatchedParensError(input_string)
-        elif check > 0:
-            input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
-            check = _check_input_parens(input_string)
-            continue
-    val = make_list(input_string)
-    for element in val:
-        print "okay" if element == None else element.eval(glob)
-
-
-
 
 def _check_input_parens(input_string):
     # Returns
@@ -140,10 +143,3 @@ def _check_input_parens(input_string):
         if parencount < 0:
             return parencount
     return parencount
-
-if __name__ == "__main__":
-    if len(sys.argv) >= 2 and sys.argv[1] == "debug":
-        debug = True
-    else:
-        debug = False
-    initialize()

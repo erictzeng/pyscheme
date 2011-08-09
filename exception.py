@@ -29,3 +29,8 @@ class IndexOutOfBoundsError(SchemeError):
 class MismatchedParensError(SchemeError):
     def __init__(self, expression):
         self.msg = "Mismatched parenthesis: {0}".format(expression)
+
+# Parse Error
+class ParseError(SchemeError):
+    def __init__(self, token):
+        self.msg = "Error: Unidentified token {0}".format(token)
