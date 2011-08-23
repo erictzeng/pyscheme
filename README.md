@@ -7,3 +7,8 @@ A Scheme interpreter written in Python.
 ```
 python pyscheme.py
 ```
+### Debugging mode
+Uses normal Python handling of exceptions
+```
+python pyscheme.py debug
+```
