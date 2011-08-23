@@ -34,3 +34,13 @@ class MismatchedParensError(SchemeError):
 class ParseError(SchemeError):
     def __init__(self, token):
         self.msg = "Error: Unidentified token {0}".format(token)
+
+# Trace Error
+class TraceError(SchemeError):
+    def __init__(self, expression, reason):
+        self.msg = "Error: Cannot trace {0}: {1}".format(expression, reason)
+
+# Untrace Error
+class UntraceError(SchemeError):
+    def __init__(self, expression, reason):
+        self.msg = "Error: Cannot untrace {0}: {1}".format(expression. reason)

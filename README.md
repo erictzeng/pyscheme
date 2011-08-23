@@ -17,10 +17,9 @@ python pyscheme.py debug
 
 ## Meta-Options
 ### Pretty-print
-To turn pretty-print of numbers on and off, set the environment variable
-```
-pretty-print
-```
+To turn pretty-print of numbers on and off, set the variable
+```pretty-print```
+(default is```#f```)
 
 Example:
 

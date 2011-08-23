@@ -82,19 +82,7 @@ class SpecialForm(Callable):
         return self.proc(call)
 
 class Procedure(Callable):
-    def apply(self, env, args):
-        unevaluated = filter(lambda (arg, value): value, args)
-        if unevaluated:
-            # There are some arguments that have no value
-            required = []
-            for index, arg in enumerate(unevaluated):
-                required.append((arg, index))
-            return None, required
-        else:
-            # All arguments have values
-            return self._apply_evaluated(map(lambda (arg, value): value, args)), None
-    
-    def _apply_evaluated(self, args):
+    def apply(self, call):
         raise NotImplementedError
 
     def isProcedure(self):
@@ -105,9 +93,6 @@ class Primitive(Procedure):
     def __init__(self, name, proc):
         self.name = name
         self.proc = proc
-
-    def _apply_evaluated(self, args):
-        return self.proc(*args)
 
     def __str__(self):
         return "#[subr {0}]".format(self.name)
@@ -122,7 +107,13 @@ class Primitive(Procedure):
                 util.EvalStack().push(util.EvalCall(element.datum, call.env, call, element.position))
             return
         else:
-            return self.proc(*[element.value for element in call.elements[1:]])
+            args = [element.value for element in call.elements[1:]]
+            args_list = reduce(lambda accum, next: ConsPair(next, accum), args, Nil())
+            traced = util.EvalStack().isTraced(self, call)
+            if not traced is False:
+                util.EvalStack().printTraceStart(self, [(Identifier('args'), args_list)], traced)
+            call.set_value(self.proc(*args))
+            return
 
 class Lambda(Procedure):
     def __init__(self, env, params, body):
@@ -138,24 +129,6 @@ class Lambda(Procedure):
         if not params == Nil():
             self.params.append(params)
             self.rest_params = True
-
-    def _apply_evaluated(self, args):
-        new_env = env.Env(self.env)
-        if not self.rest_params:
-            if len(args) == len(self.params):
-                new_env.update(zip(map(str, self.params), args))
-            else:
-                raise exception.ArgumentCountError('lambda', len(self.params), len(args))
-        else:
-            if len(args) >= len(self.params) - 1:
-                new_env.update(zip(map(str, self.params[:-1]), args[:len(self.params)-1]))
-                new_env.update([(str(self.params[-1]), reduce(lambda accum, next: ConsPair(next, accum), args[len(self.params)-1:], Nil()))])
-            else:
-                raise exception.ArgumentCountError('lambda', '{0} or more'.format(len(self.params) - 1), len(args))
-        expressions = []
-        for index, expr in enumerate(self.body[:-1]):
-            expressions.append(expr, index)
-        return None, expressions
 
     def apply(self, call):
         unevaluated_elements = filter(lambda e: not e.value, call.elements)
@@ -177,6 +150,14 @@ class Lambda(Procedure):
                     new_env.update([(str(self.params[-1]), reduce(lambda accum, next: ConsPair(next, accum), args[len(self.params)-1:], Nil()))])
                 else:
                     raise exception.ArgumentCountError('lambda', '{0} or more'.format(len(self.params) - 1), len(args))
+            traced = util.EvalStack().isTraced(self, call)
+            if not traced is False:
+                if self.rest_params:
+                    args_and_values = zip(self.params[:-1], args[:len(self.params)-1])
+                    args_and_values.append((self.params[-1], reduce(lambda accum, next: ConsPair(next, accum), args[len(self.params)-1:], Nil())))
+                else:
+                    args_and_values = zip(self.params, args)
+                util.EvalStack().printTraceStart(self, args_and_values, traced)
             for expression in reversed(self.body):
                 util.EvalStack().push(util.EvalCall(expression, new_env, call, -1))
             return

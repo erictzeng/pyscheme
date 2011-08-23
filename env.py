@@ -54,7 +54,7 @@ class Env(dict):
 
 
 @util.singleton
-class GlobalEnv(Env):
-    
+
+class GlobalEnv(Env):   
     def __init__(self):
         Env.__init__(self, None)

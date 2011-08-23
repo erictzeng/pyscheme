@@ -197,7 +197,7 @@ def set_bang(call):
                 call.env.__setitem__(str(var.datum), val.value)
                 return data.SchemeNone()
         else:
-            raise exceptionWrongArgumentTypeError('set!', 'variable', var)
+            raise exception.WrongArgumentTypeError('set!', 'variable', var)
     else:
         raise exception.ArgumentCountError('set!', 'exactly two', len(args))
 
@@ -213,6 +213,39 @@ def cons_stream(call):
             return data.ConsPair(car.value, data.Promise(cdr, call.env))
     else:
         raise exception.ArgumentCountError('cons-stream', 'exactly two', len(args))
+
+@specialform('trace')
+def trace(call):
+    args = call.elements[1:]
+    if len(args) == 1:
+        if args[0].value is None:
+            call.push_arg(args[0].position)
+            return
+        else:
+            if args[0].datum.isIdentifier() and args[0].value.isProcedure():
+                util.EvalStack().addTrace(args[0].datum)
+                return data.SchemeNone()
+            else:
+                raise exception.TraceError(args[0].datum, 'trace requires a procedure name')
+    else:
+        raise exception.ArgumentCountError('trace', 'exactly one', len(args))
+
+@specialform('untrace')
+def untrace(call):
+    args = call.elements[1:]
+    if len(args) == 1:
+        if args[0].value is None:
+            call.push_arg(args[0].position)
+            return
+        else:
+            if args[0].datum.isIdentifier() and args[0].value.isProcedure():
+                util.EvalStack().removeTrace(args[0].datum)
+                return data.SchemeNone()
+            else:
+                raise exception.UntraceError(args[0].datum, 'untrace requires a procedure name')
+    else:
+        raise exception.ArgumentCountError('untrace', 'exactly one', len(args))
+
 
 ###########################
 #  Arithmetic  functions  #
