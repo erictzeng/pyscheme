@@ -47,19 +47,29 @@ class EvalStack:
             return
 
     def print_stack_trace(self):
-        print "Stack trace not implemented"
+        print "Stack trace: (Most recent call first)"
+        print "-------------------------------------"
+        index = 0
+        if self.isEmpty():
+            print "No elements on stack"
+        else:
+            current = self.stack[-1]
+            while not current is None:
+                print "{0}\t{1}".format(index, current.datum)
+                current = current.parent
+                index += 1
 
-    def _clear_stack(self):
+    def clear_stack(self):
         self.stack = []
 
     def isEmpty(self):
         return not self.stack
 
 class EvalCall:
-    def __init__(self, datum, env, parent, position):
-        self.datum    = datum
-        self.env      = env
-        self.parent   = parent
+    def __init__(self, datum, env, parent=None, position=0):
+        self.datum = datum
+        self.env = env
+        self.parent = parent
         self.position = position
 
         self.value    = None
@@ -68,7 +78,7 @@ class EvalCall:
         if self.datum.isList() and self.datum.isPair():
             self.elements = [EvalElement(element, None, position) for position, element in enumerate(self.datum)]
         else:
-            self.value = self.datum.eval(env)
+            self.value = self.datum.eval(self)
 
     def eval(self):
         if not self.value is None:

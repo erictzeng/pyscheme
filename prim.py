@@ -63,57 +63,73 @@ for name, value in config.items("Variables"):
 ###################
 
 @specialform('and')
-def _and(env, *args):
+def _and(call):
+    args = call.elements[1:]
     for arg in args:
-        if not arg.eval(env):
-            return data.Bool("#f")
-    return args[-1]
+        if arg.value is None:
+            call.push_arg(arg.position)
+            return
+        else:
+            if not arg.value:
+                return data.Boolean("#f")
+    return args[-1].value
 
 @specialform('or')
-def _or(env, *args):
+def _or(call):
+    args = call.elements[1:]
     for arg in args:
-        if arg.eval(env):
-            return arg
-    return data.Bool("#f")
+        if arg.value is None:
+            call.push_arg(arg.position)
+            return
+        else:
+            if arg.value:
+                return arg.value
+    return data.Boolean("#f")
 
 @specialform('define')
 def define(call):
     args = call.elements[1:]
-    if len(args) == 2:
-        var, body = args[0].datum, args[1]
+    if len(args) > 1:
+        var = args[0].datum
         if var.isIdentifier():
-            if body.value is None:
-                util.EvalStack().push(util.EvalCall(body.datum, call.env, call, body.position))
-                return
+            if len(args) == 2:
+                body = args[1]
+                if body.value is None:
+                    util.EvalStack().push(util.EvalCall(body.datum, call.env, call, body.position))
+                    return
+                else:
+                    call.env.new_var(str(var), body.value)
+                    return var
             else:
-                call.env.new_var(str(var), body.value)
-                return var
+                raise exception.ArgumentCountError('define', 'exactly two', len(args))
         elif var.isList():
+            body = map(lambda arg: arg.datum, args[1:])
             if not var is data.Nil() and var.car.isIdentifier():
-                call.env.new_var(str(var.car), _lambda(call.env, var.cdr, body.datum))
+                call.env.new_var(str(var.car), data.Lambda(call.env, var.cdr, body))
                 return var.car
             else:
                 raise exception.WrongArgumentTypeError('define', 'variable or function', var)
         else:
             raise exception.WrongArgumentTypeError('define', 'variable or function', var)
     else:
-        raise exception.ArgumentCountError('define', 'exactly two', len(args))
+        raise exception.ArgumentCountError('define', 'at least two', len(args))
 
 @specialform('lambda')
-def _lambda(env, *args):
+def _lambda(call):
+    args = call.elements[1:]
     if len(args) > 1:
-        return data.Lambda(env, args[0], args[1:])
+        return data.Lambda(env, args[0].datum, map(lambda arg: arg.datum, args[1:]))
     else:
         raise exception.ArgumentCountError('lambda', 'two or more', len(args))
 
 @specialform('delay')
-def delay(env, *args):
+def delay(env, call):
+    args = call.elements[1:]
     if len(args) == 1:
-        return data.Promise(args[0], env)
+        return data.Promise(args[0].datum, call.env)
     else:
         raise exception.ArgumentCountError('delay', 'exactly one', len(args))
 
-# START STACK
 @specialform('if')
 def _if(call):
     args = call.elements[1:]
@@ -141,18 +157,20 @@ def _if(call):
         raise exception.ArgumentCountError('if', 'two or three', len(args))
 
 @specialform('let')
-def let(env, *args):
+def let(call):
+    args = call.elements[1:]
     if len(args) > 1:
-        bindings, body = args[0], args[1:]
-        variables, values = data.Nil(), []
+        bindings, body = args[0].datum, map(lambda arg: arg.datum, args[1:])
+        variables, values = data.Nil(), data.Nil()
         if bindings.isList():
             for pair in bindings:
                 if pair.isPair():
                     variables = data.ConsPair(pair.car, variables)
-                    values = [pair.cdr.car] + values
+                    values = data.ConsPair(pair.cdr.car, values)
                 else:
                     raise exception.WrongArgumentTypeError('let', 'pair', pair)
-            return data.Lambda(env, variables, body)._apply_evaluated(map(lambda value: value.eval(env), values))
+            util.EvalStack().push(util.EvalCall(data.ConsPair(data.Lambda(call.env, variables, body), values), call.env, call, -1))
+            return
         else:
             raise exception.WrongArgumentTypeError('let', 'list', bindings)
     else:

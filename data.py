@@ -24,7 +24,7 @@ import exception
         
 class SchemeDatum(object):
     def eval(self, env):
-        raise NotImplementedError
+        return self
 
     def __nonZero__(self):
         return True
@@ -75,13 +75,10 @@ class SpecialForm(Callable):
         self.name = name
         self.proc = proc
         
-    def apply(self, env, args):
-        return self.proc(env, *args)
-
     def isSpecialForm(self):
         return True
 
-    def eval(self, call):
+    def apply(self, call):
         return self.proc(call)
 
 class Procedure(Callable):
@@ -118,7 +115,7 @@ class Primitive(Procedure):
     def isPrimitive(self):
         return True
 
-    def eval(self, call):
+    def apply(self, call):
         unevaluated_elements = filter(lambda e: not e.value, call.elements)
         if unevaluated_elements:
             for element in reversed(unevaluated_elements):
@@ -160,7 +157,7 @@ class Lambda(Procedure):
             expressions.append(expr, index)
         return None, expressions
 
-    def eval(self, call):
+    def apply(self, call):
         unevaluated_elements = filter(lambda e: not e.value, call.elements)
         if unevaluated_elements:
             for element in reversed(unevaluated_elements):
@@ -210,7 +207,7 @@ class ConsPair(SchemeDatum):
     def eval(self, call):
         operator = call.elements[0]
         if operator.value:
-            return operator.value.eval(call)
+            return operator.value.apply(call)
         else:
             util.EvalStack().push(util.EvalCall(operator.datum, call.env, call, 0))
             return
@@ -264,9 +261,6 @@ class Nil(SchemeDatum):
     def isList(self):
         return True
     
-    def eval(self, env):
-        return self
-
     def isNil(self):
         return True
 
@@ -274,9 +268,6 @@ class Nil(SchemeDatum):
 class SchemeNone(SchemeDatum):
     def __repr__(self):
         return "okay"
-
-    def eval(self, env):
-        return self
 
 class Vector(SchemeDatum):
     def __init__(self, *args):
@@ -306,9 +297,6 @@ class Vector(SchemeDatum):
 class IntLiteral(SchemeDatum):
     def __init__(self, val):
         self.val = val
-
-    def eval(self, env):
-        return self
 
     def __add__(self, num):
         return IntLiteral(self.val + num.val)
@@ -344,8 +332,8 @@ class Identifier(SchemeDatum):
     def __init__(self, name):
         self.name = name
 
-    def eval(self, env):
-        return env[self.name]
+    def eval(self, call):
+        return call.env[self.name]
 
     def __str__(self):
         return self.name
@@ -359,9 +347,6 @@ class Identifier(SchemeDatum):
 class Boolean(SchemeDatum):
     def __init__(self, value):
         self.value = value
-
-    def eval(self, env):
-        return self
 
     def __str__(self):
         return self.value
@@ -380,8 +365,5 @@ class Promise(SchemeDatum):
         self.forced = False
         self.val = None
         
-    def eval(self, env):
-        return self
-
     def isPromise(self):
         return True

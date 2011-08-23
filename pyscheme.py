@@ -118,7 +118,7 @@ def repl(prompt = "pyscheme > "):
                     check = _check_input_parens(input_string)
                     continue
             for element in reversed(make_list(input_string)):
-                util.EvalStack().push(util.EvalCall(element, glob, None, 0))
+                util.EvalStack().push(util.EvalCall(element, glob))
                 while not util.EvalStack().isEmpty():
                     util.EvalStack().do_useful()
         except Exception as e:
@@ -127,6 +127,8 @@ def repl(prompt = "pyscheme > "):
             else:
                 print "***Error:"
                 print "   {0}".format(e.msg)
+                util.EvalStack().print_stack_trace()
+                util.EvalStack().clear_stack()
                 continue
 
 def _check_input_parens(input_string):
@@ -145,5 +147,5 @@ def _check_input_parens(input_string):
 
 if __name__ == "__main__":
     debug = len(sys.argv) >= 2 and sys.argv[1] == "debug"
-    util.EvalStack()._clear_stack()
+    util.EvalStack().clear_stack()
     repl()
