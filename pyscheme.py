@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import data
 import env
 import prim
+import util
+
 import re
 import sys
 import exception
@@ -95,7 +97,7 @@ def tokenize_list(input_string):
         # Append the correct string to parse later
         if quote:
             result.append("(quote {0})".format(input_string[:index]))
-        elif token:
+        elif not token is None:
             result.append(token)
         input_string = input_string[index:]
     return result
@@ -115,8 +117,10 @@ def repl(prompt = "pyscheme > "):
                     input_string += " {0}".format(raw_input(" " * (len(prompt) - 2) + "> "))
                     check = _check_input_parens(input_string)
                     continue
-            for element in make_list(input_string):
-                print element.eval(glob) or "okay"
+            for element in reversed(make_list(input_string)):
+                util.EvalStack().push(util.EvalCall(element, glob, None, 0))
+                while not util.EvalStack().isEmpty():
+                    util.EvalStack().do_useful()
         except Exception as e:
             if debug:
                 traceback.print_exc(file=sys.stdout)
@@ -141,4 +145,5 @@ def _check_input_parens(input_string):
 
 if __name__ == "__main__":
     debug = len(sys.argv) >= 2 and sys.argv[1] == "debug"
+    util.EvalStack()._clear_stack()
     repl()

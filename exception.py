@@ -13,7 +13,7 @@ class IllegalArgumentError(SchemeError):
 # Bad number of arguments
 class ArgumentCountError(IllegalArgumentError):
     def __init__(self, function, expected, given):
-        self.msg = "Bad number of arguments: {0} takes {1} arguments ({2} given)".format(function, given, expected)
+        self.msg = "Bad number of arguments: {0} takes {1} arguments ({2} given)".format(function, expected, given)
 
 # Wrong type of argument
 class WrongArgumentTypeError(IllegalArgumentError):

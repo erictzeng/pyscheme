@@ -23,3 +23,70 @@ def singleton(C):
         return instances[C]
     return get_instance
 
+@singleton
+class EvalStack:
+    def __init__(self):
+        self.stack = []
+
+    def push(self, element):
+        self.stack.append(element)
+
+    def pop(self):
+        return self.stack.pop()
+
+    def do_useful(self):
+        current = self.stack[-1]
+        value = current.eval()
+        if not value is None:
+            if current.parent:
+                current.parent.set_args(value, current.position)
+            else:
+                print value
+            self.pop()
+        else:
+            return
+
+    def print_stack_trace(self):
+        print "Stack trace not implemented"
+
+    def _clear_stack(self):
+        self.stack = []
+
+    def isEmpty(self):
+        return not self.stack
+
+class EvalCall:
+    def __init__(self, datum, env, parent, position):
+        self.datum    = datum
+        self.env      = env
+        self.parent   = parent
+        self.position = position
+
+        self.value    = None
+        self.elements = None
+
+        if self.datum.isList() and self.datum.isPair():
+            self.elements = [EvalElement(element, None, position) for position, element in enumerate(self.datum)]
+        else:
+            self.value = self.datum.eval(env)
+
+    def eval(self):
+        if not self.value is None:
+            return self.value
+        else:
+            return self.datum.eval(self)
+        
+    def set_args(self, value, position):
+        if position < 0:
+            self.value = value
+        else:
+            self.elements[position].value = value
+    
+    def push_arg(self, position):
+        EvalStack().push(EvalCall(self.elements[position].datum, self.env, self, position))
+
+class EvalElement:
+    def __init__(self, datum, value, position):
+        self.datum    = datum
+        self.value    = value
+        self.position = position

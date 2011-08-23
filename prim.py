@@ -77,15 +77,20 @@ def _or(env, *args):
     return data.Bool("#f")
 
 @specialform('define')
-def define(env, *args):
+def define(call):
+    args = call.elements[1:]
     if len(args) == 2:
-        var, body = args
+        var, body = args[0].datum, args[1]
         if var.isIdentifier():
-            env.new_var(str(var), body.eval(env))
-            return var
+            if body.value is None:
+                util.EvalStack().push(util.EvalCall(body.datum, call.env, call, body.position))
+                return
+            else:
+                call.env.new_var(str(var), body.value)
+                return var
         elif var.isList():
-            if not var == data.Nil() and var.car.isIdentifier():
-                env.new_var(str(var.car), _lambda(env, var.cdr, body))
+            if not var is data.Nil() and var.car.isIdentifier():
+                call.env.new_var(str(var.car), _lambda(call.env, var.cdr, body.datum))
                 return var.car
             else:
                 raise exception.WrongArgumentTypeError('define', 'variable or function', var)
@@ -106,20 +111,34 @@ def delay(env, *args):
     if len(args) == 1:
         return data.Promise(args[0], env)
     else:
-        raise ArgumentCountError('delay', 'exactly one', len(args))
+        raise exception.ArgumentCountError('delay', 'exactly one', len(args))
 
+# START STACK
 @specialform('if')
-def _if(env, *args):
-    if len(args) == 2:
-        if args[0].eval(env):
-            return args[1].eval(env)
-    elif len(args) == 3:
-        if args[0].eval(env):
-            return args[1].eval(env)
+def _if(call):
+    args = call.elements[1:]
+    if len(args) == 2 or len(args) == 3:
+        if args[0].value is None:
+            call.push_arg(args[0].position)
+            return
         else:
-            return args[2].eval(env)
+            if args[0].value:
+                if args[1].value is None:
+                    call.push_arg(args[1].position)
+                    return
+                else:
+                    return args[1].value
+            else:
+                if len(args) == 2:
+                    return data.SchemeNone()
+                else:
+                    if args[2].value is None:
+                        call.push_arg(args[2].position)
+                        return
+                    else:
+                        return args[2].value
     else:
-        raise ArgumentCountError('if', 'two or three', len(args))
+        raise exception.ArgumentCountError('if', 'two or three', len(args))
 
 @specialform('let')
 def let(env, *args):
@@ -132,19 +151,19 @@ def let(env, *args):
                     variables = data.ConsPair(pair.car, variables)
                     values = [pair.cdr.car] + values
                 else:
-                    raise WrongArgumentTypeError('let', 'pair', pair)
+                    raise exception.WrongArgumentTypeError('let', 'pair', pair)
             return data.Lambda(env, variables, body)._apply_evaluated(map(lambda value: value.eval(env), values))
         else:
-            raise WrongArgumentTypeError('let', 'list', bindings)
+            raise exception.WrongArgumentTypeError('let', 'list', bindings)
     else:
-        raise ArgumentCountError('let', 'two or more', len(args))
+        raise exception.ArgumentCountError('let', 'two or more', len(args))
 
 @specialform('quote')
 def quote(env, *args):
     if len(args) == 1:
         return args[0]
     else:
-        raise ArgumentCountError('quote', 'exactly one', len(args))
+        raise exception,ArgumentCountError('quote', 'exactly one', len(args))
 
 @specialform('set!')
 def set_bang(env, *args):
@@ -153,9 +172,9 @@ def set_bang(env, *args):
         if var.isIdentifier():
             env.__setitem__(str(var), val.eval(env))
         else:
-            raise WrongArgumentTypeError('set!', 'variable', var)
+            raise exceptionWrongArgumentTypeError('set!', 'variable', var)
     else:
-        raise ArgumentCountError('set!', 'exactly two', len(args))
+        raise exception.ArgumentCountError('set!', 'exactly two', len(args))
 
 @specialform('cons-stream')
 def cons_stream(env, *args):
@@ -163,14 +182,14 @@ def cons_stream(env, *args):
         car, cdr = args
         return data.ConsPair(car, data.Promise(cdr, env))
     else:
-        raise ArgumentCountError('cons-stream', 'exactly two', len(args))
+        raise exception.ArgumentCountError('cons-stream', 'exactly two', len(args))
 
 @specialform('display')
 def display(env, *args):
     if len(args) == 1:
         sys.stdout.write(str(args[0]))
     else:
-        raise ArgumentCountError('display', 'exactly one', len(args))
+        raise exception.ArgumentCountError('display', 'exactly one', len(args))
 ###########################
 #  Arithmetic  functions  #
 ###########################
@@ -420,9 +439,9 @@ def force(*args):
                 promise.forced = True
                 return promise.val
         else:
-            raise WrongArgumentTypeError('force', 'promise', promise)
+            raise exceptionWrongArgumentTypeError('force', 'promise', promise)
     else:
-        raise ArgumentCountError('force', 'exactly one', len(args))
+        raise exception.ArgumentCountError('force', 'exactly one', len(args))
 
 @primitive('stream-car')
 def stream_car(*args):
@@ -430,9 +449,9 @@ def stream_car(*args):
         if args[0].isPair():
             return args[0].car
         else:
-            raise WrongArgumentTypeError('stream-car', 'pair', args[0])
+            raise exception.WrongArgumentTypeError('stream-car', 'pair', args[0])
     else:
-        raise ArgumentCountError('stream-car', 'exactly one', len(args))
+        raise exception.ArgumentCountError('stream-car', 'exactly one', len(args))
 
 @primitive('stream-cdr')
 def stream_cdr(*args):
@@ -441,8 +460,8 @@ def stream_cdr(*args):
             if args[0].cdr.isPromise():
                 return force(args[0].cdr)
             else:
-                raise WrongArgumentTypeError('stream-cdr', 'promise', args[0].cdr)
+                raise exception.WrongArgumentTypeError('stream-cdr', 'promise', args[0].cdr)
         else:
-            raise WrongArgumentTypeError('stream-cdr', 'pair', args[0])
+            raise exception.WrongArgumentTypeError('stream-cdr', 'pair', args[0])
     else:
-        raise ArgumentCountError('stream-cdr', 'exactly one', len(args))
+        raise exception.ArgumentCountError('stream-cdr', 'exactly one', len(args))

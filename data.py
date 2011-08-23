@@ -25,7 +25,7 @@ import exception
 class SchemeDatum(object):
     def eval(self, env):
         raise NotImplementedError
-    
+
     def __nonZero__(self):
         return True
 
@@ -50,6 +50,21 @@ class SchemeDatum(object):
     def isPromise(self):
         return False
 
+    def isSpecialForm(self):
+        return False
+
+    def isPrimitive(self):
+        return False
+
+    def isLambda(self):
+        return False
+
+    def isNil(self):
+        return False
+
+    def isProcedure(self):
+        return False
+
 class Callable(SchemeDatum):
     def apply(self, env, args):
         raise NotImplementedError
@@ -63,14 +78,30 @@ class SpecialForm(Callable):
     def apply(self, env, args):
         return self.proc(env, *args)
 
+    def isSpecialForm(self):
+        return True
+
+    def eval(self, call):
+        return self.proc(call)
 
 class Procedure(Callable):
     def apply(self, env, args):
-        args = [arg.eval(env) for arg in args]
-        return self._apply_evaluated(args)
+        unevaluated = filter(lambda (arg, value): value, args)
+        if unevaluated:
+            # There are some arguments that have no value
+            required = []
+            for index, arg in enumerate(unevaluated):
+                required.append((arg, index))
+            return None, required
+        else:
+            # All arguments have values
+            return self._apply_evaluated(map(lambda (arg, value): value, args)), None
     
     def _apply_evaluated(self, args):
         raise NotImplementedError
+
+    def isProcedure(self):
+        return True
 
 
 class Primitive(Procedure):
@@ -84,6 +115,17 @@ class Primitive(Procedure):
     def __str__(self):
         return "#[subr {0}]".format(self.name)
 
+    def isPrimitive(self):
+        return True
+
+    def eval(self, call):
+        unevaluated_elements = filter(lambda e: not e.value, call.elements)
+        if unevaluated_elements:
+            for element in reversed(unevaluated_elements):
+                util.EvalStack().push(util.EvalCall(element.datum, call.env, call, element.position))
+            return
+        else:
+            return self.proc(*[element.value for element in call.elements[1:]])
 
 class Lambda(Procedure):
     def __init__(self, env, params, body):
@@ -103,22 +145,50 @@ class Lambda(Procedure):
     def _apply_evaluated(self, args):
         new_env = env.Env(self.env)
         if not self.rest_params:
-            if len(args) != len(self.params):
-                raise exception.ArgumentCountError('lambda', len(self.params), len(args))
-            else:
+            if len(args) == len(self.params):
                 new_env.update(zip(map(str, self.params), args))
-        else:
-            if len(args) < len(self.params) - 1:
-                raise exception.ArgumentCountError('lambda', '{0} or more'.format(len(self.params) - 1), len(args))
             else:
+                raise exception.ArgumentCountError('lambda', len(self.params), len(args))
+        else:
+            if len(args) >= len(self.params) - 1:
                 new_env.update(zip(map(str, self.params[:-1]), args[:len(self.params)-1]))
                 new_env.update([(str(self.params[-1]), reduce(lambda accum, next: ConsPair(next, accum), args[len(self.params)-1:], Nil()))])
-        for expr in self.body[:-1]:
-            expr.eval(new_env)
-        return self.body[-1].eval(new_env)
+            else:
+                raise exception.ArgumentCountError('lambda', '{0} or more'.format(len(self.params) - 1), len(args))
+        expressions = []
+        for index, expr in enumerate(self.body[:-1]):
+            expressions.append(expr, index)
+        return None, expressions
+
+    def eval(self, call):
+        unevaluated_elements = filter(lambda e: not e.value, call.elements)
+        if unevaluated_elements:
+            for element in reversed(unevaluated_elements):
+                util.EvalStack().push(util.EvalCall(element.datum, call.env, call, element.position))
+            return
+        else:
+            new_env = env.Env(self.env)
+            args = [element.value for element in call.elements[1:]]
+            if not self.rest_params:
+                if len(args) == len(self.params):
+                    new_env.update(zip(map(str, self.params), args))
+                else:
+                    raise exception.ArgumentCountError('lambda', len(self.params), len(args))
+            else:
+                if len(args) >= len(self.params) - 1:
+                    new_env.update(zip(map(str, self.params[:-1]), args[:len(self.params)-1]))
+                    new_env.update([(str(self.params[-1]), reduce(lambda accum, next: ConsPair(next, accum), args[len(self.params)-1:], Nil()))])
+                else:
+                    raise exception.ArgumentCountError('lambda', '{0} or more'.format(len(self.params) - 1), len(args))
+            for expression in reversed(self.body):
+                util.EvalStack().push(util.EvalCall(expression, new_env, call, -1))
+            return
 
     def __repr__(self):
         return "[Lambda {0}]".format(self.raw_params)
+
+    def isLambda(self):
+        return True
                 
 
 class ConsPair(SchemeDatum):
@@ -137,14 +207,13 @@ class ConsPair(SchemeDatum):
             cdr = " . {0}".format(cdr)
         return "({0}{1})".format(self.car, cdr.rstrip(" "))
 
-    def eval(self, env):
-        oper = self.car.eval(env)
-        args = []
-        current = self.cdr
-        while not current == Nil():
-            args.append(current.car)
-            current = current.cdr
-        return oper.apply(env, args)
+    def eval(self, call):
+        operator = call.elements[0]
+        if operator.value:
+            return operator.value.eval(call)
+        else:
+            util.EvalStack().push(util.EvalCall(operator.datum, call.env, call, 0))
+            return
 
     def __iter__(self):
         def iterator():
@@ -153,6 +222,24 @@ class ConsPair(SchemeDatum):
                 yield current.car
                 current = current.cdr
         return iterator()
+
+    def __len__(self):
+        count = 0
+        for element in self:
+            count += 1
+        return count
+
+    def __getitem__(self, key):
+        if key < 0:
+            key = len(self) + key
+        if key < 0 or key >= len(self):
+            raise IndexError
+        else:
+            current = self
+            while key > 0:
+                current = current.cdr
+                key -= 1
+            return current.car
 
     def isPair(self):
         return True
@@ -177,6 +264,17 @@ class Nil(SchemeDatum):
     def isList(self):
         return True
     
+    def eval(self, env):
+        return self
+
+    def isNil(self):
+        return True
+
+@util.singleton
+class SchemeNone(SchemeDatum):
+    def __repr__(self):
+        return "okay"
+
     def eval(self, env):
         return self
 
