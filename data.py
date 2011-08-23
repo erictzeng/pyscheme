@@ -23,7 +23,7 @@ import env
 import exception
         
 class SchemeDatum(object):
-    def eval(self, env):
+    def eval(self, call):
         return self
 
     def __nonZero__(self):

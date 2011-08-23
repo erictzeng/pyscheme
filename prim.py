@@ -177,37 +177,43 @@ def let(call):
         raise exception.ArgumentCountError('let', 'two or more', len(args))
 
 @specialform('quote')
-def quote(env, *args):
+def quote(call):
+    args = call.elements[1:]
     if len(args) == 1:
-        return args[0]
+        return args[0].datum
     else:
         raise exception,ArgumentCountError('quote', 'exactly one', len(args))
 
 @specialform('set!')
-def set_bang(env, *args):
+def set_bang(call):
+    args = call.elements[1:]
     if len(args) == 2:
         var, val = args
-        if var.isIdentifier():
-            env.__setitem__(str(var), val.eval(env))
+        if var.datum.isIdentifier():
+            if val.value is None:
+                call.push_arg(val.position)
+                return
+            else:
+                call.env.__setitem__(str(var.datum), val.value)
+                return data.SchemeNone()
         else:
             raise exceptionWrongArgumentTypeError('set!', 'variable', var)
     else:
         raise exception.ArgumentCountError('set!', 'exactly two', len(args))
 
 @specialform('cons-stream')
-def cons_stream(env, *args):
+def cons_stream(call):
+    args = call.elements[1:]
     if len(args) == 2:
         car, cdr = args
-        return data.ConsPair(car, data.Promise(cdr, env))
+        if car.value is None:
+            call.push_arg(car.position)
+            return
+        else:
+            return data.ConsPair(car.value, data.Promise(cdr, call.env))
     else:
         raise exception.ArgumentCountError('cons-stream', 'exactly two', len(args))
 
-@specialform('display')
-def display(env, *args):
-    if len(args) == 1:
-        sys.stdout.write(str(args[0]))
-    else:
-        raise exception.ArgumentCountError('display', 'exactly one', len(args))
 ###########################
 #  Arithmetic  functions  #
 ###########################
@@ -483,3 +489,13 @@ def stream_cdr(*args):
             raise exception.WrongArgumentTypeError('stream-cdr', 'pair', args[0])
     else:
         raise exception.ArgumentCountError('stream-cdr', 'exactly one', len(args))
+
+##########
+#  Misc  #
+##########
+@primitive('display')
+def display(*args):
+    if len(args) == 1:
+        sys.stdout.write(str(args[0]))
+    else:
+        raise exception.ArgumentCountError('display', 'exactly one', len(args))
