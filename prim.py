@@ -314,6 +314,7 @@ def append_bang(*args):
             else:
                 current.cdr = element
             current = current.cdr
+        return data.SchemeNone()
 
 @primitive('cons')
 def cons(*args):
@@ -382,6 +383,7 @@ def set_car_bang(*args):
         cons_pair, new_car = args[0], args[1]
         if cons_pair.isPair():
             cons_pair.car = new_car
+            return data.SchemeNone()
         else:
             raise exception.WrongArgumentTypeError('set-car!', 'pair', cons_pair)
     else:
@@ -393,6 +395,7 @@ def set_cdr_bang(*args):
         cons_pair, new_cdr = args[0], args[1]
         if cons_pair.isPair():
             cons_pair.cdr = new_cdr
+            return data.SchemeNone()
         else:
             raise exception.WrongArgumentTypeError('set-cdr!', 'pair', cons_pair)
     else:
@@ -446,6 +449,7 @@ def vector_set_bang(*args):
         raise exception.WrongArgumentTypeError('vector-set!', 'numerical type', index)
     else:
         vector.set(index.val, value)
+        return datam.SchemeNone()
 
 #############
 #  Streams  #
@@ -497,5 +501,6 @@ def stream_cdr(*args):
 def display(*args):
     if len(args) == 1:
         sys.stdout.write(str(args[0]))
+        return data.SchemeNone()
     else:
         raise exception.ArgumentCountError('display', 'exactly one', len(args))
